@@ -1,11 +1,12 @@
-import { Router } from 'express'
-const userRoutes = require('user.routes')
-const ticketRoutes = require('ticket.routes')
+const { Router } = require('express');
+const userRoutes = require('./user.routes');   // No CommonJS, o .js é opcional
+const ticketRoutes = require('./ticket.routes');
 
-const rootRouter = Router()
+const rootRouter = Router();
 
-// Define as rotas espefícias para cada classe
-rootRouter.use('/users', userRoutes)
-rootRouter.use('/tickets', ticketRoutes)
+// Agrupamento de rotas
+rootRouter.use('/users', userRoutes);
+rootRouter.use('/tickets', ticketRoutes);
 
-module.exports = rootRouter
+// Exportação padrão do CommonJS
+module.exports = rootRouter;

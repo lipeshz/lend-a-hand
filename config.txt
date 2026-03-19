@@ -1,7 +1,0 @@
-CONTROLLERS por classe e chama o SERVICE
-SERVICE tem a lógica de negócio e validação (salva no banco)
-PRIMAS já possui os métodos de banco
-ROTAS -> INDEX -> METODO
-SERVER.JS define as configs básicas do projeto
-
-SCHEMA -> ROTAS -> CONTROLLERS -> SERVICES

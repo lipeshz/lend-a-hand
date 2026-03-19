@@ -1,33 +1,48 @@
-// Importo o service para acessar as funções
-import userService from '../services/UserService';
+// Importamos o service usando require
+const UserService = require('../services/UserService');
 
-// Defino o controller e seus métodos
 const UserController = {
-    async store(req, res) {
-        try{
-            // Defino as variáveis do body
-            const {name, email, password, conf_password, type} = req.body
-
-            // Chamo o service com os dados do usuário
-            const user = await userService.register({name, email, password, conf_password, type})
-
-            return res.status(201).json(user)
-        }catch(error){
-            if(error.details){
+    async store(req, res) { // Nome alterado de store para register para bater com a rota
+        try {
+            // Captura os dados do body
+            const { name, email, password, conf_password, type } = req.body;
+            // Chamo o service (note que o seu import era UserService, então usamos o mesmo nome)
+            const user = await UserService.register({ name, email, password, conf_password, type });
+            return res.status(201).json(user);
+        } catch (error) {
+            // Se houver erros de validação (aqueles que definimos com .details no Service)
+            if (error.details) {
                 return res.status(400).json({
                     status: "error",
-                    "message": "Validation failed.",
-                    "errors": error.details
-                })
+                    message: "Validation failed.",
+                    errors: error.details
+                });
             }
             
-            console.error(error)
+            // Log para debug em caso de erro inesperado (banco, conexão, etc)
+            console.error(error);
             return res.status(500).json({
-                "status": "error",
-                "message": "Internal error."
-            })
+                status: "error",
+                message: "Internal error."
+            });
+        }
+    },
+
+    async edit(req, res){
+        
+    },
+
+    async search(req, res){
+        try{
+            const { q } = req.query
+            const result = await UserService.search(q)
+            console.log("Q:" + result)
+            return res.json(result)
+        }catch(error){
+            return res.status(500).json({error: "Search failed."})
         }
     }
 }
 
+// Exportação padrão do CommonJS
 module.exports = UserController;
