@@ -1,0 +1,28 @@
+{
+  "name": "lend-a-hand",
+  "version": "1.0.0",
+  "description": "Lend a Hand é um sistemas de chamados.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lipeshz/lend-a-hand.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lipeshz/lend-a-hand/issues"
+  },
+  "homepage": "https://github.com/lipeshz/lend-a-hand#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "prisma": "^7.5.0"
+  }
+}
