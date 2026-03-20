@@ -4,8 +4,6 @@ const express = require('express');
 const mainRoutes = require('./routes/index');
 
 const app = express();
-
-
 app.use(express.json());
 
 // Todas as rotas centralizadas

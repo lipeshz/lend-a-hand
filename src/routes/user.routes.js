@@ -6,7 +6,7 @@ const userRoutes = Router();
 // Rota de registro chamando o método do Controller
 userRoutes.post('/register', UserController.store);
 userRoutes.get('/search', UserController.search);
-userRoutes.patch('edit', UserController.edit)
+userRoutes.patch('/update', UserController.update)
 
 // Exportação padrão para ser usada no routes/index.js
 module.exports = userRoutes;

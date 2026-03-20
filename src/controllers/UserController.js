@@ -36,10 +36,20 @@ const UserController = {
         try{
             const { q } = req.query
             const result = await UserService.search(q)
-            console.log("Q:" + result)
             return res.json(result)
         }catch(error){
-            return res.status(500).json({error: "Search failed."})
+            return res.status(500).json({error: error.message})
+        }
+    },
+
+    async update(req, res){
+        try{
+            const { id, name, email, password, type } = req.body
+            const { requestertype, requesterid } = req.headers
+            const updatedUser = await UserService.update({ id, name, email, password, type }, { requestertype, requesterid } )
+            return res.status(204).json(updatedUser)
+        }catch(error){
+            return res.status(500).json({error: error.message})
         }
     }
 }
