@@ -5,8 +5,8 @@ const ticketRoutes = require('./ticket.routes');
 const rootRouter = Router();
 
 // Agrupamento de rotas
-rootRouter.use('/users', userRoutes);
-rootRouter.use('/tickets', ticketRoutes);
+rootRouter.use('/', userRoutes);
+rootRouter.use('/', ticketRoutes);
 
 // Exportação padrão do CommonJS
 module.exports = rootRouter;

@@ -4,9 +4,10 @@ const UserController = require('../controllers/UserController'); // Note que rem
 const userRoutes = Router();
 
 // Rota de registro chamando o método do Controller
-userRoutes.post('/register', UserController.store);
-userRoutes.get('/search', UserController.search);
-userRoutes.patch('/update', UserController.update)
+userRoutes.post('/users', UserController.store);
+userRoutes.get('/users', UserController.index);
+userRoutes.get('/users/:id', UserController.show);
+userRoutes.patch('/users/:id', UserController.update);
 
 // Exportação padrão para ser usada no routes/index.js
 module.exports = userRoutes;

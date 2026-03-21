@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs')
 const { User } = require('../models/schema')
 const validateFields = require('../utils/validateFields')
+const filterFields = require('../utils/filterFields')
 
 class UserService{
     async register(data) {
@@ -42,18 +43,13 @@ class UserService{
         return userObject;
     }
 
-    async search(query){
-        // Recebo a query do controller
-        const q = query
-        
-        // Se não houver query eu retorno vazio
-        if(!q) return []
-        const searchRegex = new RegExp(query, 'i')
+    async search(filters){
+        if(!filters) return []
+        // Filtro os dados vindos dos header
+        const data = filterFields(filters)
         
         // Retorna os usuários do banco de acordo com a regex
-        const users = await User.find({
-            $or: [{ name: searchRegex }, { email: searchRegex }]
-        }).select('-__v') // remove a senha para retornar
+        const users = await User.find(data).select('-__v') // remove a senha para retornar
         return users
     }
 
@@ -72,7 +68,6 @@ class UserService{
         if(requestertype === "user"){
             if(id == requesterid){
                 updates = validateFields(data, allowedFields)
-                console.log("PAROU AQUI")
                 if(updates == {}){
                     throw new Error("Nenhum dado válido foi enviado para atualização.")
                 }

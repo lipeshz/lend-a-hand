@@ -28,23 +28,29 @@ const UserController = {
         }
     },
 
-    async edit(req, res){
-        
-    },
-
-    async search(req, res){
+    async index(req, res){
         try{
-            const { q } = req.query
-            const result = await UserService.search(q)
+            const { name, email, type } = req.query
+            
+            const result = await UserService.search({ name, email, type })
             return res.json(result)
         }catch(error){
             return res.status(500).json({error: error.message})
         }
     },
 
+    async show(req, res){
+        try{
+
+        }catch(error){
+
+        }
+    },
+
     async update(req, res){
         try{
-            const { id, name, email, password, type } = req.body
+            const { id } = req.params
+            const { name, email, password, type } = req.body
             const { requestertype, requesterid } = req.headers
             const updatedUser = await UserService.update({ id, name, email, password, type }, { requestertype, requesterid } )
             return res.status(204).json(updatedUser)
