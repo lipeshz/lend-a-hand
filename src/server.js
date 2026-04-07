@@ -11,7 +11,7 @@ app.use(mainRoutes);
 
 mongoose.connect(process.env.DATABASE_URL)
     .then(() => console.log("Connected!"))
-    .catch((err) => console.error("Database error!"))
+    .catch((err) => console.error("Database error!" + err))
 
 const PORT = 3000;
 app.listen(PORT, () => {

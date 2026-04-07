@@ -11,5 +11,21 @@ function validateFields(data, allowedFields){
     return updates
 }
 
+// Validação dos campos do usuário
+const validateUserData = (data, schema) => {
+    let errors = {}
+    Object.keys(data).forEach(function(key){
+        const rules = schema[key]
+        const value = data[key]
 
-module.exports = validateFields
+        if(rules){
+            rules.forEach(rule => {
+                if(!rule.test(value, data)){
+                    errors.key = rule.message
+                }
+            })
+        }
+    })
+}
+
+module.exports = validateFields, validateUserData

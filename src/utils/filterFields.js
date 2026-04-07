@@ -1,5 +1,5 @@
 const formatString = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
+// Monta os objetos da query do db
 function filterFields(data){
     let filter = {}
     Object.keys(data).forEach(function(key){

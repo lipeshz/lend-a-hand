@@ -1,29 +1,22 @@
 const bcrypt = require('bcryptjs')
 const { User } = require('../models/schema')
 const validateFields = require('../utils/validateFields')
+const validationUserData = require('../utils/validateFields')
+const validationSchema = require('../utils/userSchema')
 const filterFields = require('../utils/filterFields')
 
 class UserService{
     async register(data) {
         const {name, email, password, conf_password, type} = data
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail|outlook|hotmail)\.com$/;
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$/;
 
-        const errors = {}
-
+        // Validação
+        const errors = validationUserData(data, validationSchema)
         // Valida o formato primeiro
-        if(name.length < 6) errors.name_err = "Too short."
-        if(!emailRegex.test(email)) errors.email_err = "Invalid e-mail domain."
-        if(!passwordRegex.test(password)) errors.pass_err = "Password too weak."
-        if(password != conf_password) errors.pass_err = "Password don't match."
-        if(type !== "user" || type !== "supervisor" || type !== "technical") errors.type = "Invalid user type."
         if(Object.keys(errors).length === 0){
             // Verifica se o usuário existe (para não ficar fazendo requisições a toa)
             const userExists = await User.findOne({where: {email}})
             if(userExists) errors.email_err = "User already exists."
-        }
-
-        if(Object.keys(errors).length > 0){
+        }else{
             // Instancia um erro com uma mensagem e os erros dos campos
             const error = new Error("Validation failed.")
             error.details = errors
@@ -54,6 +47,9 @@ class UserService{
     }
 
     async update(data, context){
+        if((requestertype != "user" || requestertype != "supervisor" || requestertype != "technical") && !requesterid)
+            throw new Error("Invalid update request.")
+
         const { id, name, email, password, type } = data
         const { requestertype, requesterid } = context
         let updates = {}
@@ -64,26 +60,14 @@ class UserService{
             }
         }
         const allowedFields = permission.type[requestertype] || permission.type.user
+        updates = validateFields(data, allowedFields)
+        validationUserData(updates, validationSchema)
+        if(Object.keys(updates).lenght == 0)
+            throw new Error("Nenhum dado válido foi enviado para atualização.")
 
-        if(requestertype === "user"){
-            if(id == requesterid){
-                updates = validateFields(data, allowedFields)
-                if(updates == {}){
-                    throw new Error("Nenhum dado válido foi enviado para atualização.")
-                }
-            }else{
-                const error = new Error("Invalid update request.")
-                throw error
-            }
-        }else if(requestertype === "supervisor" || requestertype === "technical"){
-            updates = validateFields(data, allowedFields)
-        }else{
+        if(requestertype === "user" && id !== requesterid){
             const error = new Error("Invalid update request.")
             throw error
-        }
-        
-        if(Object.keys(updates).length === 0){
-            throw new Error("Nenhum dado válido foi enviado para atualização.")
         }
 
         const user = await User.findByIdAndUpdate(
