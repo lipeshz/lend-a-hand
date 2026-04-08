@@ -1,7 +1,7 @@
 function validateFields(data, allowedFields){
     let updates = {}
     Object.keys(data).forEach(function(key){
-        if(allowedFields.includes(key) && data[key] !== undefined){
+        if(Object.values(allowedFields).includes(key) && data[key] !== undefined){
             updates[key] = data[key]
         }
     });
@@ -13,19 +13,26 @@ function validateFields(data, allowedFields){
 
 // Validação dos campos do usuário
 const validateUserData = (data, schema) => {
-    let errors = {}
+    const errors = {}
     Object.keys(data).forEach(function(key){
         const rules = schema[key]
         const value = data[key]
 
         if(rules){
-            rules.forEach(rule => {
-                if(!rule.test(value, data)){
-                    errors.key = rule.message
-                }
-            })
+            // rules.forEach(rule => {
+            //     if(!rule.test(value, data)){
+            //         errors[key] = rule.message
+            //     }
+            // })
+            const failedRule = rules.find(rule => !rule.test(value, data)) // Usar .find() para não sobrepor a mensagem de erro
+            if(failedRule)
+                errors[key] = failedRule.message // Acessar a message pelo failedRule
         }
     })
+    return errors
 }
 
-module.exports = validateFields, validateUserData
+module.exports = { 
+    validateFields, 
+    validateUserData 
+}

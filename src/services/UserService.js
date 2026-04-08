@@ -1,8 +1,7 @@
 const bcrypt = require('bcryptjs')
 const { User } = require('../models/schema')
-const validateFields = require('../utils/validateFields')
-const validationUserData = require('../utils/validateFields')
-const validationSchema = require('../utils/userSchema')
+const { validateUserData, validateFields } = require('../utils/validateFields')
+const userSchema = require('../utils/userSchema')
 const filterFields = require('../utils/filterFields')
 
 class UserService{
@@ -10,11 +9,13 @@ class UserService{
         const {name, email, password, conf_password, type} = data
 
         // Validação
-        const errors = validationUserData(data, validationSchema)
+        const errors = validateUserData(data, userSchema)
+        console.log(errors)
         // Valida o formato primeiro
         if(Object.keys(errors).length === 0){
             // Verifica se o usuário existe (para não ficar fazendo requisições a toa)
             const userExists = await User.findOne({where: {email}})
+            console.log("PAROU AQUI!!! 🚨🚨🚨🚨🚨")
             if(userExists) errors.email_err = "User already exists."
         }else{
             // Instancia um erro com uma mensagem e os erros dos campos
@@ -29,6 +30,7 @@ class UserService{
                 password,
                 type
             })
+
         // Retorna o usuário sem senha por segurança
         const userObject = user.toObject()
         delete userObject.password;
@@ -53,6 +55,7 @@ class UserService{
         const { id, name, email, password, type } = data
         const { requestertype, requesterid } = context
         let updates = {}
+
         const permission = {
             "type": {
                 supervisor: ['name', 'email', 'password', 'type'], technical: ['name', 'email', 'password', 'type'],
@@ -60,8 +63,10 @@ class UserService{
             }
         }
         const allowedFields = permission.type[requestertype] || permission.type.user
+
         updates = validateFields(data, allowedFields)
         validationUserData(updates, validationSchema)
+
         if(Object.keys(updates).lenght == 0)
             throw new Error("Nenhum dado válido foi enviado para atualização.")
 

@@ -23,7 +23,7 @@ const UserController = {
             console.error(error);
             return res.status(500).json({
                 status: "error",
-                message: "Internal error."
+                message: "Internal error ->" + error
             });
         }
     },
