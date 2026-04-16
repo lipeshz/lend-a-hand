@@ -1,7 +1,13 @@
 require('dotenv').config()
 const mongoose = require('mongoose')
 const express = require('express');
+const dns = require("dns");
 const mainRoutes = require('./routes/index');
+
+dns.setServers([
+    '1.1.1.1',
+    '8.8.8.8'
+])
 
 const app = express();
 app.use(express.json());

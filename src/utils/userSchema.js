@@ -9,15 +9,22 @@ const userSchema = {
     ],
     email: [
         { test: (val) => emailRegex.test(val), message: "Invalid e-mail" }
+        // Validar e-mail único
     ],
     password: [
         { test: (val) => passwordRegex.test(val), message: "Invalid password!" }
-
     ],
     conf_password: [ 
         { test: (val) => passwordRegex.test(val), message: "Invalid password!" },
         { test: (val, data) => val === data.password, message: "Password doesn't match!" }
+    ],
+    type: [
+        { test: (val) => (val == "supervisor" || val == "technical" || val == "user" ), message: "Invalid type" }
     ]
+}
+
+const userLogin = {
+    
 }
 
 module.exports = userSchema

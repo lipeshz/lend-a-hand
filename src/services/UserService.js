@@ -49,12 +49,19 @@ class UserService{
     }
 
     async update(data, context){
+        // ALTERAR VALIDAÇÃO PARA JWT
+        const { id, name, email, password, type } = data
+        const { requestertype, requesterid } = context
+        const requester = await User.findById(requesterid);
+        let updates = {}
+
         if((requestertype != "user" || requestertype != "supervisor" || requestertype != "technical") && !requesterid)
             throw new Error("Invalid update request.")
 
-        const { id, name, email, password, type } = data
-        const { requestertype, requesterid } = context
-        let updates = {}
+        if(requestertype === "user" && id !== requesterid){
+            const error = new Error("Invalid update request.")
+            throw error
+        }
 
         const permission = {
             "type": {
@@ -62,16 +69,17 @@ class UserService{
                 user: ['name', 'email', 'password']
             }
         }
+
         const allowedFields = permission.type[requestertype] || permission.type.user
 
         updates = validateFields(data, allowedFields)
-        validationUserData(updates, validationSchema)
+        const errors = validateUserData(updates, userSchema)
 
-        if(Object.keys(updates).lenght == 0)
+        if(Object.keys(updates).lenght == 0){
             throw new Error("Nenhum dado válido foi enviado para atualização.")
-
-        if(requestertype === "user" && id !== requesterid){
-            const error = new Error("Invalid update request.")
+        }else if(Object.keys(errors).length > 0){
+            const error = new Error("Validation failed.")
+            error.details = errors
             throw error
         }
 
@@ -80,6 +88,18 @@ class UserService{
             { $set: updates },
             { returnDocument: 'after', runValidators: true }
         )
+        return user
+    }
+
+    async login(email, password){
+        let details = {}
+        const user = await User.findOne({ where: {email} })
+
+        const pwMatch = await userSchema.methods.comparePassword(password)
+
+        if(!pwMatch || !user)
+            throw new Error("E-mail or password are wrong.")
+
         return user
     }
 }

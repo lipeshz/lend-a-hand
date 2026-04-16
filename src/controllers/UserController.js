@@ -2,7 +2,7 @@
 const UserService = require('../services/UserService');
 
 const UserController = {
-    async store(req, res) { // Nome alterado de store para register para bater com a rota
+    async store(req, res) {
         try {
             // Captura os dados do body
             const { name, email, password, conf_password, type } = req.body;
@@ -33,7 +33,7 @@ const UserController = {
             const { name, email, type } = req.query
             
             const result = await UserService.search({ name, email, type })
-            return res.json(result)
+            return res.status(200).json(result)
         }catch(error){
             return res.status(500).json({error: error.message})
         }
@@ -54,6 +54,16 @@ const UserController = {
             const { requestertype, requesterid } = req.headers
             const updatedUser = await UserService.update({ id, name, email, password, type }, { requestertype, requesterid } )
             return res.status(204).json(updatedUser)
+        }catch(error){
+            return res.status(500).json({error: error.message})
+        }
+    },
+
+    async login(req, res){
+        try{
+            const { email, password } = req.body
+            const loginUser = await UserService.login({email, password})
+            return res.status(200).json(loginUser)
         }catch(error){
             return res.status(500).json({error: error.message})
         }
