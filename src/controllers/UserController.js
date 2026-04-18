@@ -51,8 +51,8 @@ const UserController = {
         try{
             const { id } = req.params
             const { name, email, password, type } = req.body
-            const { requestertype, requesterid } = req.headers
-            const updatedUser = await UserService.update({ id, name, email, password, type }, { requestertype, requesterid } )
+            const requesterId = req.userId
+            const updatedUser = await UserService.update({ id, name, email, password, type }, userId )
             return res.status(204).json(updatedUser)
         }catch(error){
             return res.status(500).json({error: error.message})
@@ -62,7 +62,7 @@ const UserController = {
     async login(req, res){
         try{
             const { email, password } = req.body
-            const loginUser = await UserService.login({email, password})
+            const loginUser = await UserService.login({ email, password })
             return res.status(200).json(loginUser)
         }catch(error){
             return res.status(500).json({error: error.message})

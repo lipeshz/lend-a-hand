@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken');
 const { User } = require('../models/schema')
 const { validateUserData, validateFields } = require('../utils/validateFields')
 const userSchema = require('../utils/userSchema')
@@ -48,13 +49,11 @@ class UserService{
         return users
     }
 
-    async update(data, context){
+    async update(data, requesterId){
         // ALTERAR VALIDAÇÃO PARA JWT
         const { id, name, email, password, type } = data
-        const { requestertype, requesterid } = context
-        const requester = await User.findById(requesterid);
+        const requester = await User.findById(requesterId);
         let updates = {}
-
         if((requestertype != "user" || requestertype != "supervisor" || requestertype != "technical") && !requesterid)
             throw new Error("Invalid update request.")
 
@@ -91,16 +90,27 @@ class UserService{
         return user
     }
 
-    async login(email, password){
+    // RETORNAR ERROS AO CONTROLLER
+    async login(data){
         let details = {}
-        const user = await User.findOne({ where: {email} })
+        const { email, password } = data
+        let user = await User.findOne({ email: email })
 
-        const pwMatch = await userSchema.methods.comparePassword(password)
+        if(!user)
+            throw new Error("E-mail or password are incorrect.")
 
-        if(!pwMatch || !user)
-            throw new Error("E-mail or password are wrong.")
+        const pwMatch = await user.comparePassword(password)
 
-        return user
+        if(!pwMatch)
+            throw new Error("E-mail or password are incorrect.")
+
+        const token = jwt.sign(
+            {id: user.id, email: user.email},
+            process.env.JWT_SECRET,
+            {expiresIn: '7d'}
+        )
+        console.log(token)
+        return {user, token}
     }
 }
 

@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const authMiddleWare = require('../middlewares/authMiddleWare')
 const { User } = require('../models/schema')
 const UserController = require('../controllers/UserController'); // Note que removemos o .js
 
@@ -15,7 +16,7 @@ userRoutes.get('/users', UserController.index);
 userRoutes.get('/users/:id', UserController.show);
 
 // Edita um usuário
-userRoutes.patch('/users/:id', UserController.update);
+userRoutes.patch('/users/:id', authMiddleWare, UserController.update);
 
 // CONCLUIR JWT
 userRoutes.post('/users/login', UserController.login);
