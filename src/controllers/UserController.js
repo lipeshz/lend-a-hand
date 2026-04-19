@@ -51,8 +51,7 @@ const UserController = {
         try{
             const { id } = req.params
             const { name, email, password, type } = req.body
-            const requesterId = req.userId
-            const updatedUser = await UserService.update({ id, name, email, password, type }, userId )
+            const updatedUser = await UserService.update({ id, name, email, password, type }, req.userId )
             return res.status(204).json(updatedUser)
         }catch(error){
             return res.status(500).json({error: error.message})

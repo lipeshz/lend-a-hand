@@ -54,10 +54,10 @@ class UserService{
         const { id, name, email, password, type } = data
         const requester = await User.findById(requesterId);
         let updates = {}
-        if((requestertype != "user" || requestertype != "supervisor" || requestertype != "technical") && !requesterid)
+        if((requester.type != "user" || requester.type != "supervisor" || requester.type != "technical") && !requesterId)
             throw new Error("Invalid update request.")
 
-        if(requestertype === "user" && id !== requesterid){
+        if(requester.type === "user" && id !== requesterId){
             const error = new Error("Invalid update request.")
             throw error
         }
@@ -69,7 +69,7 @@ class UserService{
             }
         }
 
-        const allowedFields = permission.type[requestertype] || permission.type.user
+        const allowedFields = permission.type[requester.type] || permission.type.user
 
         updates = validateFields(data, allowedFields)
         const errors = validateUserData(updates, userSchema)
@@ -109,7 +109,7 @@ class UserService{
             process.env.JWT_SECRET,
             {expiresIn: '7d'}
         )
-        console.log(token)
+
         return {user, token}
     }
 }

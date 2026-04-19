@@ -7,10 +7,10 @@ const userRoutes = Router();
 
 // Rota de registro chamando o método do Controller
 // Insere um usuário
-userRoutes.post('/users', UserController.store);
+userRoutes.post('/users', authMiddleWare, UserController.store);
 
 // Retorna os usuários
-userRoutes.get('/users', UserController.index);
+userRoutes.get('/users', authMiddleWare, UserController.index);
 
 // Retorna um usuário específico
 userRoutes.get('/users/:id', UserController.show);
