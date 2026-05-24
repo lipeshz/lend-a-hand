@@ -1,1 +1,3 @@
 - dinamizar o fluxo dos HTTP CODE da response
+- tratar erros sem usar exception
+- organizar nomes de variáveis, atributos e métodos

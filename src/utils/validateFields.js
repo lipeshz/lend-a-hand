@@ -12,8 +12,7 @@ function validateFields(data, allowedFields){
 }
 
 // Validação dos campos do usuário
-const validateUserData = (data, schema) => {
-    const errors = {}
+const validateUserData = (data, schema, errors) => {
     Object.keys(data).forEach(function(key){
         const rules = schema[key]
         const value = data[key]

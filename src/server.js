@@ -21,5 +21,5 @@ mongoose.connect(process.env.DATABASE_URL)
 
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor ON na porta ${PORT}`);
+    console.log(`Servidor na porta ${PORT}`);
 });

@@ -6,37 +6,50 @@ const userSchema = require('../utils/userSchema')
 const filterFields = require('../utils/filterFields')
 
 class UserService{
-    async register(data) {
-        const {name, email, password, conf_password, type} = data
+    async register(data, requesterId) {
+        try{
+            const {name, email, password, conf_password, type} = data
+            const requester = await User.findById(requesterId)
+            const userExists = await User.findOne({email: data.email})
+            const errors = {}
 
-        // Validação
-        const errors = validateUserData(data, userSchema)
-        console.log(errors)
-        // Valida o formato primeiro
-        if(Object.keys(errors).length === 0){
             // Verifica se o usuário existe (para não ficar fazendo requisições a toa)
-            const userExists = await User.findOne({where: {email}})
-            console.log("PAROU AQUI!!! 🚨🚨🚨🚨🚨")
-            if(userExists) errors.email_err = "User already exists."
-        }else{
-            // Instancia um erro com uma mensagem e os erros dos campos
-            const error = new Error("Validation failed.")
-            error.details = errors
-            throw error
+            if(userExists){ 
+                return {
+                    success: false,
+                    statusCode: 409,
+                    message: "User already exists."
+                }
+            }else if(requester.type != "supervisor" && requester.type != "technical"){
+                return {
+                    success: false,
+                    statusCode: 403,
+                    message: "Invalid requester type."
+                }
+            }
+
+            // Validação
+            validateUserData(data, userSchema, errors)
+
+            if(Object.keys(errors).length > 0) return { success: false, statusCode: 422, message: errors }
+
+            const userObj = await User.create({
+                    name,
+                    email,
+                    password,
+                    type
+                })
+
+            // Retorna o usuário sem senha por segurança
+            const user = userObj.toObject()
+            delete user.password;
+            delete user.__v;
+
+            return user;
+        }catch(error){
+            throw error;
         }
-
-        const user = await User.create({
-                name,
-                email,
-                password,
-                type
-            })
-
-        // Retorna o usuário sem senha por segurança
-        const userObject = user.toObject()
-        delete userObject.password;
-
-        return userObject;
+        
     }
 
     async search(filters){
@@ -94,21 +107,25 @@ class UserService{
     async login(data){
         let details = {}
         const { email, password } = data
-        let user = await User.findOne({ email: email })
+        let userObj = await User.findOne({ email: email })
 
-        if(!user)
+        if(!userObj)
             throw new Error("E-mail or password are incorrect.")
 
-        const pwMatch = await user.comparePassword(password)
+        const pwMatch = await userObj.comparePassword(password)
 
         if(!pwMatch)
             throw new Error("E-mail or password are incorrect.")
 
         const token = jwt.sign(
-            {id: user.id, email: user.email},
+            {id: userObj.id, email: userObj.email},
             process.env.JWT_SECRET,
             {expiresIn: '7d'}
         )
+
+        const user = userObj.toObject()
+        delete user.password;
+        delete user.__v;
 
         return {user, token}
     }

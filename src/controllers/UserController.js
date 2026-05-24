@@ -7,23 +7,30 @@ const UserController = {
             // Captura os dados do body
             const { name, email, password, conf_password, type } = req.body;
             // Chamo o service (note que o seu import era UserService, então usamos o mesmo nome)
-            const user = await UserService.register({ name, email, password, conf_password, type });
-            return res.status(201).json(user);
-        } catch (error) {
-            // Se houver erros de validação (aqueles que definimos com .details no Service)
-            if (error.details) {
-                return res.status(400).json({
+            const result = await UserService.register({ name, email, password, conf_password, type }, req.userId);
+
+            if(!result.success){
+                return res.status(result.statusCode).json({
                     status: "error",
-                    message: "Validation failed.",
-                    errors: error.details
+                    message: result.message
+                })
+            }
+
+            return res.status(201).json(result);
+        } catch (error) {
+            // Se houver erros de validação (aquele que defini com .details no Service)
+            if (error) {
+                return res.status(500).json({
+                    status: "critical_error",
+                    message: "Critical server error.",
                 });
             }
             
             // Log para debug em caso de erro inesperado (banco, conexão, etc)
-            console.error(error);
+            console.error(errors);
             return res.status(500).json({
                 status: "error",
-                message: "Internal error ->" + error
+                message: "Internal error ->" + errors
             });
         }
     },
