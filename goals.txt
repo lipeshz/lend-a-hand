@@ -1,3 +1,11 @@
 - dinamizar o fluxo dos HTTP CODE da response
 - tratar erros sem usar exception
 - organizar nomes de variáveis, atributos e métodos
+- tratar exceções com middleware
+
+OBJETIVOS:
+- padronizar o retorno de erros do usuário
+    - update
+        - url quando nao existe id dá não existe
+    - search
+    - login

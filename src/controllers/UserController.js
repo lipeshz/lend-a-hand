@@ -2,7 +2,7 @@
 const UserService = require('../services/UserService');
 
 const UserController = {
-    async store(req, res) {
+    async store(req, res, next) {
         try {
             // Captura os dados do body
             const { name, email, password, conf_password, type } = req.body;
@@ -20,18 +20,8 @@ const UserController = {
         } catch (error) {
             // Se houver erros de validação (aquele que defini com .details no Service)
             if (error) {
-                return res.status(500).json({
-                    status: "critical_error",
-                    message: "Critical server error.",
-                });
+                next(error)
             }
-            
-            // Log para debug em caso de erro inesperado (banco, conexão, etc)
-            console.error(errors);
-            return res.status(500).json({
-                status: "error",
-                message: "Internal error ->" + errors
-            });
         }
     },
 
@@ -54,14 +44,24 @@ const UserController = {
         }
     },
 
-    async update(req, res){
+    async update(req, res, next){
         try{
             const { id } = req.params
             const { name, email, password, type } = req.body
-            const updatedUser = await UserService.update({ id, name, email, password, type }, req.userId )
-            return res.status(204).json(updatedUser)
+            const result = await UserService.update({ id, name, email, password, type }, req.userId )
+            
+            if(!result.success){
+                return res.status(result.statusCode).json({
+                    status: "error",
+                    message: result.message
+                })
+            }
+            
+            return res.status(result.statusCode).json(result)
         }catch(error){
-            return res.status(500).json({error: error.message})
+            if(error){
+                next(error)
+            }
         }
     },
 

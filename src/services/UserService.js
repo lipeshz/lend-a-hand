@@ -1,55 +1,55 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose')
 const { User } = require('../models/schema')
-const { validateUserData, validateFields } = require('../utils/validateFields')
+const { validateUserData, validateFields, filterUpdates } = require('../utils/validateFields')
 const userSchema = require('../utils/userSchema')
 const filterFields = require('../utils/filterFields')
 
 class UserService{
     async register(data, requesterId) {
-        try{
-            const {name, email, password, conf_password, type} = data
-            const requester = await User.findById(requesterId)
-            const userExists = await User.findOne({email: data.email})
-            const errors = {}
+        const {name, email, password, conf_password, type} = data
+        const requester = await User.findById(requesterId)
+        const userExists = await User.findOne({email: data.email})
+        const errors = {}
 
-            // Verifica se o usuário existe (para não ficar fazendo requisições a toa)
-            if(userExists){ 
-                return {
-                    success: false,
-                    statusCode: 409,
-                    message: "User already exists."
-                }
-            }else if(requester.type != "supervisor" && requester.type != "technical"){
-                return {
-                    success: false,
-                    statusCode: 403,
-                    message: "Invalid requester type."
-                }
+        // Verifica se o usuário existe (para não ficar fazendo requisições a toa)
+        if(userExists){ 
+            return {
+                success: false,
+                statusCode: 409,
+                message: "User already exists."
             }
-
-            // Validação
-            validateUserData(data, userSchema, errors)
-
-            if(Object.keys(errors).length > 0) return { success: false, statusCode: 422, message: errors }
-
-            const userObj = await User.create({
-                    name,
-                    email,
-                    password,
-                    type
-                })
-
-            // Retorna o usuário sem senha por segurança
-            const user = userObj.toObject()
-            delete user.password;
-            delete user.__v;
-
-            return user;
-        }catch(error){
-            throw error;
+        }else if(requester.type != "supervisor" && requester.type != "technical"){
+            return {
+                success: false,
+                statusCode: 403,
+                message: "Invalid requester type."
+            }
         }
-        
+
+        // Validação
+        validateUserData(data, userSchema, errors)
+
+        if(Object.keys(errors).length > 0) return {
+            success: false,
+            statusCode: 422,
+            message: errors
+        }
+
+        const userObj = await User.create({
+                name,
+                email,
+                password,
+                type
+            })
+
+        // Retorna o usuário sem senha por segurança
+        const user = userObj.toObject()
+        delete user.password;
+        delete user.__v;
+
+        return user;
     }
 
     async search(filters){
@@ -66,13 +66,33 @@ class UserService{
         // ALTERAR VALIDAÇÃO PARA JWT
         const { id, name, email, password, type } = data
         const requester = await User.findById(requesterId);
-        let updates = {}
-        if((requester.type != "user" || requester.type != "supervisor" || requester.type != "technical") && !requesterId)
-            throw new Error("Invalid update request.")
 
-        if(requester.type === "user" && id !== requesterId){
-            const error = new Error("Invalid update request.")
-            throw error
+        if(!mongoose.Types.ObjectId.isValid(id)) return {
+            success: false,
+            statusCode: 400,
+            message: "Invalid ID."
+        }
+
+        const userUpdated = await User.findById(id);
+        const errors = {}
+        let updates = {}
+
+        if(!userUpdated) return {
+            success: false,
+            statusCode: 404,
+            message: "User not found."
+        }
+
+        if((requester.type != "user" || requester.type != "supervisor" || requester.type != "technical") && !requesterId) return {
+            success: false,
+            statusCode: 403,
+            message: "Invalid requester type."
+        }
+
+        if(requester.type === "user" && id !== requesterId) return {
+            success: false,
+            statusCode: 403,
+            message: "Invalid request"
         }
 
         const permission = {
@@ -84,15 +104,21 @@ class UserService{
 
         const allowedFields = permission.type[requester.type] || permission.type.user
 
-        updates = validateFields(data, allowedFields)
-        const errors = validateUserData(updates, userSchema)
+        validateFields(data, allowedFields, updates)
 
-        if(Object.keys(updates).lenght == 0){
-            throw new Error("Nenhum dado válido foi enviado para atualização.")
-        }else if(Object.keys(errors).length > 0){
-            const error = new Error("Validation failed.")
-            error.details = errors
-            throw error
+        validateUserData(updates, userSchema, errors)
+        if(Object.keys(errors).length > 0) return {
+            success: false,
+            statusCode: 422,
+            message: errors
+        }
+
+        updates = filterUpdates(updates, userUpdated)
+
+        if(Object.keys(updates).length == 0) return {
+            success: true,
+            statusCode: 200,
+            message: "Nenhum dado foi atualizado."
         }
 
         const user = await User.findByIdAndUpdate(
@@ -100,7 +126,7 @@ class UserService{
             { $set: updates },
             { returnDocument: 'after', runValidators: true }
         )
-        return user
+        return { user, success: true, statusCode: 204, message: "Updated." }
     }
 
     // RETORNAR ERROS AO CONTROLLER

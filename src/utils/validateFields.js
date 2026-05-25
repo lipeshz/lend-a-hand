@@ -1,5 +1,6 @@
-function validateFields(data, allowedFields){
-    let updates = {}
+const { update } = require("../services/UserService");
+
+function validateFields(data, allowedFields, updates){
     Object.keys(data).forEach(function(key){
         if(Object.values(allowedFields).includes(key) && data[key] !== undefined){
             updates[key] = data[key]
@@ -8,6 +9,15 @@ function validateFields(data, allowedFields){
     // console.log(allowedFields)
     // console.log(updates)
     // console.log(data)
+    return updates
+}
+
+function filterUpdates(updateData, userData){
+    let updates = {}
+    Object.keys(updateData).forEach(function(key){
+        if(updateData[key] != userData[key]) updates[key] = updateData[key]
+    })
+    
     return updates
 }
 
@@ -33,5 +43,6 @@ const validateUserData = (data, schema, errors) => {
 
 module.exports = { 
     validateFields, 
-    validateUserData 
+    validateUserData,
+    filterUpdates
 }
