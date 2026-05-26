@@ -7,7 +7,7 @@ const userSchema = require('../utils/userSchema')
 const filterFields = require('../utils/filterFields')
 
 class UserService{
-    async register(data, requesterId) {
+    async store(data, requesterId) {
         const {name, email, password, conf_password, type} = data
         const requester = await User.findById(requesterId)
         const userExists = await User.findOne({email: data.email})
@@ -52,14 +52,40 @@ class UserService{
         return user;
     }
 
-    async search(filters){
-        if(!filters) return []
+    async index(filters){
+        if(!filters) return { success: false, statusCode: 200, message: "There is no data." }
+
         // Filtro os dados vindos dos header
         const data = filterFields(filters)
-        
         // Retorna os usuários do banco de acordo com a regex
         const users = await User.find(data).select('-__v') // remove a senha para retornar
-        return users
+
+        if(filters = {} || filters != {}) return {
+            users,
+            success: true,
+            statusCode: 200,
+            message: "Success."
+        }
+
+        // return { users, success: true, statusCode: 200, message: "Success."}
+    }
+
+    async show(userId, requesterId){
+        const requester = await User.findById(requesterId).select('-password')
+        if(!requester) return {
+            success: false,
+            statusCode: 404,
+            message: "Invalid requester ID."
+        }
+
+        const user = await User.findById(userId).select('-password')
+        if(!user) return {
+                success: false,
+                statusCode: 404,
+                message: "User not found."
+            }
+
+        return { user, success: true, statusCode: 200, message: "Success." }
     }
 
     async update(data, requesterId){

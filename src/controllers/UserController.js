@@ -25,22 +25,32 @@ const UserController = {
         }
     },
 
-    async index(req, res){
+    async index(req, res, next){
         try{
-            const { name, email, type } = req.query
+            const { id, name, email, type } = req.query
+            const result = await UserService.index({ id, name, email, type })
             
-            const result = await UserService.search({ name, email, type })
-            return res.status(200).json(result)
+            if(!result.success){
+                return res.status(result.statusCode).json(result)
+            }
+            return res.status(result.statusCode).json(result)
         }catch(error){
-            return res.status(500).json({error: error.message})
+            if(error){
+                next(error)
+            }
         }
     },
 
-    async show(req, res){
+    async show(req, res, next){
         try{
-
+            const { id } = req.params
+            const result = await UserService.show(id, req.userId)
+            console.log(result)
+            return res.status(200).json(result)
         }catch(error){
-
+            if(error){
+                next(error)
+            }
         }
     },
 
@@ -56,7 +66,7 @@ const UserController = {
                     message: result.message
                 })
             }
-            
+
             return res.status(result.statusCode).json(result)
         }catch(error){
             if(error){

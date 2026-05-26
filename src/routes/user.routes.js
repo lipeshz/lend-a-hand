@@ -14,7 +14,7 @@ userRoutes.post('/users', authMiddleWare, UserController.store);
 userRoutes.get('/users', authMiddleWare, UserController.index);
 
 // Retorna um usuário específico
-userRoutes.get('/users/:id', UserController.show);
+userRoutes.get('/users/:id', authMiddleWare, UserController.show);
 
 // Edita um usuário
 userRoutes.patch('/users/:id', authMiddleWare, UserController.update);

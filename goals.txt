@@ -6,6 +6,10 @@
 OBJETIVOS:
 - padronizar o retorno de erros do usuário
     - update
-        - url quando nao existe id dá não existe
-    - search
+        - organizar código
+    - show e index
+        - validar quem é o resquester do show e do index
     - login
+        - tratar erros sem usar exception
+    - delete
+        - criar rota, controller e service de delete
