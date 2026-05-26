@@ -22,6 +22,8 @@ userRoutes.patch('/users/:id', authMiddleWare, UserController.update);
 // CONCLUIR JWT
 userRoutes.post('/users/login', UserController.login);
 
+userRoutes.delete('/users/:id', authMiddleWare, UserController.delete);
+
 userRoutes.use(errorHandler);
 
 // Exportação padrão para ser usada no routes/index.js

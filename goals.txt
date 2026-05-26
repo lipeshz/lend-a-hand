@@ -8,8 +8,6 @@ OBJETIVOS:
     - update
         - organizar código
     - show e index
-        - validar quem é o resquester do show e do index
     - login
-        - tratar erros sem usar exception
     - delete
         - criar rota, controller e service de delete

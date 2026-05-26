@@ -52,8 +52,27 @@ class UserService{
         return user;
     }
 
-    async index(filters){
-        if(!filters) return { success: false, statusCode: 200, message: "There is no data." }
+    async index(filters, requesterId){
+
+        if(!filters) return {
+            success: false,
+            statusCode: 400,
+            message: "There is no data"
+        }
+
+        if(!requesterId) return {
+            success: false,
+            statusCode: 400,
+            message: "There is no requester ID."
+        }
+
+        const requester = await User.findById(requesterId)
+
+        if(requester.type != "supervisor" && requester.type != "technical") return {
+            success: false,
+            statusCode: 400,
+            message: "Forbidden"
+        }
 
         // Filtro os dados vindos dos header
         const data = filterFields(filters)
@@ -72,13 +91,23 @@ class UserService{
 
     async show(userId, requesterId){
         const requester = await User.findById(requesterId).select('-password')
+
         if(!requester) return {
             success: false,
             statusCode: 404,
-            message: "Invalid requester ID."
+            message: "Forbidden"
+        }
+
+        if(userId != requesterId){
+            if(requester.type != "supervisor" && requester.type != "technical") return {
+                success: false,
+                statusCode: 403,
+                message: "Forbidden"
+            }
         }
 
         const user = await User.findById(userId).select('-password')
+
         if(!user) return {
                 success: false,
                 statusCode: 404,
@@ -161,13 +190,19 @@ class UserService{
         const { email, password } = data
         let userObj = await User.findOne({ email: email })
 
-        if(!userObj)
-            throw new Error("E-mail or password are incorrect.")
+        if(!userObj) return {
+            success: false,
+            status: 401,
+            message: "The user doesn't exists."
+        }
 
         const pwMatch = await userObj.comparePassword(password)
 
-        if(!pwMatch)
-            throw new Error("E-mail or password are incorrect.")
+        if(!pwMatch) return {
+            success: false,
+            status: 401,
+            message: "The passwords doesn't match."
+        }
 
         const token = jwt.sign(
             {id: userObj.id, email: userObj.email},
@@ -180,6 +215,10 @@ class UserService{
         delete user.__v;
 
         return {user, token}
+    }
+
+    async delete(userId, requesterId){
+        
     }
 }
 

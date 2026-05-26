@@ -1,4 +1,5 @@
 // Importamos o service usando require
+const { User } = require('../models/schema');
 const UserService = require('../services/UserService');
 
 const UserController = {
@@ -28,10 +29,14 @@ const UserController = {
     async index(req, res, next){
         try{
             const { id, name, email, type } = req.query
-            const result = await UserService.index({ id, name, email, type })
+            const requesterId = req.userId
+            const result = await UserService.index({ id, name, email, type }, requesterId)
             
             if(!result.success){
-                return res.status(result.statusCode).json(result)
+                return res.status(result.statusCode).json({
+                    status: "error",
+                    message: result.message
+                })
             }
             return res.status(result.statusCode).json(result)
         }catch(error){
@@ -46,7 +51,10 @@ const UserController = {
             const { id } = req.params
             const result = await UserService.show(id, req.userId)
             console.log(result)
-            return res.status(200).json(result)
+            return res.status(200).json({
+                status: "error",
+                message: result.message
+            })
         }catch(error){
             if(error){
                 next(error)
@@ -75,13 +83,42 @@ const UserController = {
         }
     },
 
-    async login(req, res){
+    async delete(req, res, next){
+        try{
+            const { id } = req.params
+            const { userId } = req
+            const result = await UserService.delete(id, userId)
+
+            if(!result.success){
+                return res.status(result.statusCode).json({
+                    status: "error",
+                    message: result.message
+                })
+            }
+
+            return res.status(statusCode).json(result)
+        }catch(error){
+            next(error)
+        }
+    },
+
+    async login(req, res, next){
         try{
             const { email, password } = req.body
-            const loginUser = await UserService.login({ email, password })
-            return res.status(200).json(loginUser)
+            const result = await UserService.login({ email, password })
+
+            if(!result.success){
+                return res.status(result.statusCode).json({
+                    status: "error",
+                    message: result.message
+                })
+            }
+            
+            return res.status(result.statusCode).json(result)
         }catch(error){
-            return res.status(500).json({error: error.message})
+            if(error){
+                next(error)
+            }
         }
     }
 }
