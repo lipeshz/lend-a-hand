@@ -1,32 +1,29 @@
-const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose')
 const { User } = require('../models/schema')
 const { validateUserData, validateFields, filterUpdates } = require('../utils/validateFields')
 const userSchema = require('../utils/userSchema')
 const filterFields = require('../utils/filterFields')
+const { loggingMessageConstructor } = require('../utils/logFile')
 
 class UserService{
     async store(data, requesterId) {
         const {name, email, password, conf_password, type} = data
-        const requester = await User.findById(requesterId)
+        const requester = await User.findById(requesterId).select('-password')
         const userExists = await User.findOne({email: data.email})
         const errors = {}
 
         // Verifica se o usuário existe (para não ficar fazendo requisições a toa)
-        if(userExists){ 
-            return {
+        if(userExists) return {
                 success: false,
-                statusCode: 409,
-                message: "User already exists."
+                message: "USER_ALREADY_EXISTS",
             }
-        }else if(requester.type != "supervisor" && requester.type != "technical"){
-            return {
+
+        if(requester.type != "supervisor" && requester.type != "technical") return {
                 success: false,
-                statusCode: 403,
-                message: "Invalid requester type."
+                message: "FORBIDDEN",
+                log: await loggingMessageConstructor("MESSAGE: The requester doesn't have permission to create a new user.", { requester })
             }
-        }
 
         // Validação
         validateUserData(data, userSchema, errors)
@@ -70,7 +67,7 @@ class UserService{
 
         if(requester.type != "supervisor" && requester.type != "technical") return {
             success: false,
-            statusCode: 400,
+            statusCode: 403,
             message: "Forbidden"
         }
 
@@ -79,11 +76,11 @@ class UserService{
         // Retorna os usuários do banco de acordo com a regex
         const users = await User.find(data).select('-__v') // remove a senha para retornar
 
-        if(filters = {} || filters != {}) return {
+        if(filters = {}) return {
             users,
             success: true,
             statusCode: 200,
-            message: "Success."
+            message: "All users"
         }
 
         // return { users, success: true, statusCode: 200, message: "Success."}
@@ -190,15 +187,9 @@ class UserService{
         const { email, password } = data
         let userObj = await User.findOne({ email: email })
 
-        if(!userObj) return {
-            success: false,
-            status: 401,
-            message: "The user doesn't exists."
-        }
-
         const pwMatch = await userObj.comparePassword(password)
 
-        if(!pwMatch) return {
+        if(!pwMatch || !userObj) return {
             success: false,
             status: 401,
             message: "The passwords doesn't match."
@@ -218,7 +209,35 @@ class UserService{
     }
 
     async delete(userId, requesterId){
-        
+        const user = await User.findById(userId)
+        if(!user) return {
+            success: false,
+            statusCode: 404,
+            message: "User not found."
+        }
+
+        const requester = await User.findById(requesterId)
+        if(!requester) return {
+            success: false,
+            statusCode: 403,
+            message: "Forbidden."
+        }
+
+        if(requesterId == userId) return {
+            success: false,
+            statusCode: 403,
+            message: "Forbidden."
+        }
+
+        if(requester.type != "supervisor" && requester.type != "technical") return {
+            success: false,
+            statusCode: 403,
+            message: "Forbidden."
+        }
+
+        await User.findByIdAndDelete(userId)
+
+        return { success: true, statusCode: 200, message: "User succefully deleted."}
     }
 }
 

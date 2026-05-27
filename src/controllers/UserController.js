@@ -1,6 +1,8 @@
 // Importamos o service usando require
 const { User } = require('../models/schema');
 const UserService = require('../services/UserService');
+const { loggingMessage } = require('../utils/logFile');
+const { errorMap } = require('../utils/errorMap')
 
 const UserController = {
     async store(req, res, next) {
@@ -8,21 +10,24 @@ const UserController = {
             // Captura os dados do body
             const { name, email, password, conf_password, type } = req.body;
             // Chamo o service (note que o seu import era UserService, então usamos o mesmo nome)
-            const result = await UserService.register({ name, email, password, conf_password, type }, req.userId);
+            const result = await UserService.store({ name, email, password, conf_password, type }, req.userId);
 
             if(!result.success){
-                return res.status(result.statusCode).json({
+                if(result.log){
+                    loggingMessage(result.log)
+                }
+
+                const { statusCode, message} = errorMap(result.message)
+
+                return res.status(statusCode).json({
                     status: "error",
-                    message: result.message
+                    err_message: message
                 })
             }
 
             return res.status(201).json(result);
         } catch (error) {
-            // Se houver erros de validação (aquele que defini com .details no Service)
-            if (error) {
-                next(error)
-            }
+            next(error)
         }
     },
 
@@ -35,6 +40,7 @@ const UserController = {
             if(!result.success){
                 return res.status(result.statusCode).json({
                     status: "error",
+                    statusCode: result.statusCode,
                     message: result.message
                 })
             }
@@ -96,7 +102,7 @@ const UserController = {
                 })
             }
 
-            return res.status(statusCode).json(result)
+            return res.status(result.statusCode).json(result)
         }catch(error){
             next(error)
         }

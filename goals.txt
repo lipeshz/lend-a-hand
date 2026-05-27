@@ -4,10 +4,28 @@
 - tratar exceções com middleware
 
 OBJETIVOS:
-- padronizar o retorno de erros do usuário
-    - update
-        - organizar código
-    - show e index
-    - login
-    - delete
-        - criar rota, controller e service de delete
+
+log
+    - função universal de erros que insere o erro no log (permissão)
+
+user
+    - resposta do backend deve ser uma função (pq repete muito), mapper?
+        - update
+            - organizar código
+            - criar sistema de log para ver quem foi editado, o que, quando e por quem
+        - show e index
+            - criar um sistema de log para ver quem tentou acessar os usuários, quando e por quem
+        - login
+        - delete
+            - criar sistema de log para ver quem foi deletado, quando e por quem
+
+        - refatorar e organizar o código do usuário antes de ir ao ticket
+
+ticket
+    - 
+
+token
+    - blacklist de tokens (redis)
+    - logfile receber quando um token não válido tentar usar o sistema
+
+ONDE PAREI: LOG MESSAGE CONSTRUCTOR (validação se o user veio, quem foi que fez a req, etc)
