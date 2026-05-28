@@ -7,31 +7,30 @@ const filterFields = require('../utils/filterFields')
 const { loggingMessageConstructor } = require('../utils/logFile')
 
 class UserService{
-    async store(data, requesterId) {
+    async store(data, requester) {
+        if(requester.type != "supervisor" && requester.type != "technical") return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("The requester doesn't have permission to create a new user.", { requester }, "CREATE")
+        }
+
         const {name, email, password, conf_password, type} = data
-        const requester = await User.findById(requesterId).select('-password')
         const userExists = await User.findOne({email: data.email})
         const errors = {}
 
         // Verifica se o usuário existe (para não ficar fazendo requisições a toa)
         if(userExists) return {
-                success: false,
-                message: "USER_ALREADY_EXISTS",
-            }
-
-        if(requester.type != "supervisor" && requester.type != "technical") return {
-                success: false,
-                message: "FORBIDDEN",
-                log: await loggingMessageConstructor("MESSAGE: The requester doesn't have permission to create a new user.", { requester })
-            }
+            success: false,
+            error: "USER_ALREADY_EXISTS",
+        }
 
         // Validação
         validateUserData(data, userSchema, errors)
 
         if(Object.keys(errors).length > 0) return {
             success: false,
-            statusCode: 422,
-            message: errors
+            error: "UNPROCESSABLE_CONTENT",
+            labels: errors
         }
 
         const userObj = await User.create({
@@ -39,146 +38,118 @@ class UserService{
                 email,
                 password,
                 type
-            })
+        })
 
         // Retorna o usuário sem senha por segurança
         const user = userObj.toObject()
         delete user.password;
         delete user.__v;
 
-        return user;
+        return { 
+            success: true, 
+            data: user 
+        };
     }
 
-    async index(filters, requesterId){
-
-        if(!filters) return {
-            success: false,
-            statusCode: 400,
-            message: "There is no data"
-        }
-
-        if(!requesterId) return {
-            success: false,
-            statusCode: 400,
-            message: "There is no requester ID."
-        }
-
-        const requester = await User.findById(requesterId)
-
+    async index(filters, requester){
         if(requester.type != "supervisor" && requester.type != "technical") return {
             success: false,
-            statusCode: 403,
-            message: "Forbidden"
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("The requester doesn't have permission to view other users.", { requester, filter: JSON.stringify(filters) }, "INDEX")
         }
 
         // Filtro os dados vindos dos header
         const data = filterFields(filters)
         // Retorna os usuários do banco de acordo com a regex
-        const users = await User.find(data).select('-__v') // remove a senha para retornar
+        const users = await User.find(data).select('name email type').lean() // remove a senha para retornar
 
-        if(filters = {}) return {
-            users,
+        return {
             success: true,
-            statusCode: 200,
-            message: "All users"
+            data: users
         }
 
         // return { users, success: true, statusCode: 200, message: "Success."}
     }
 
-    async show(userId, requesterId){
-        const requester = await User.findById(requesterId).select('-password')
-
-        if(!requester) return {
-            success: false,
-            statusCode: 404,
-            message: "Forbidden"
-        }
-
-        if(userId != requesterId){
-            if(requester.type != "supervisor" && requester.type != "technical") return {
+    async show(userId, requester){
+        if(String(userId) != String(requester.id) && !["supervisor", "technical"].includes(requester.type)) return {
                 success: false,
-                statusCode: 403,
-                message: "Forbidden"
+                error: "FORBIDDEN",
+                log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, target: userId }, "SHOW")
             }
-        }
 
-        const user = await User.findById(userId).select('-password')
+        const user = await User.findById(userId).select('name email type').lean()
 
         if(!user) return {
-                success: false,
-                statusCode: 404,
-                message: "User not found."
-            }
+            success: false,
+            error: "NOT_FOUND"
+        }
 
-        return { user, success: true, statusCode: 200, message: "Success." }
+        return { 
+            success: true,  
+            data: user 
+        }
     }
 
-    async update(data, requesterId){
-        // ALTERAR VALIDAÇÃO PARA JWT
-        const { id, name, email, password, type } = data
-        const requester = await User.findById(requesterId);
+    async update(userId, data, requester){
+        const { name, email, password, type } = data
 
-        if(!mongoose.Types.ObjectId.isValid(id)) return {
+        if(!mongoose.Types.ObjectId.isValid(userId)) return {
             success: false,
-            statusCode: 400,
-            message: "Invalid ID."
+            error: "BAD_REQUEST",
+            log: loggingMessageConstructor("The ID format is invalid.", { requester, user: userId}, "UPDATE")
         }
 
-        const userUpdated = await User.findById(id);
-        const errors = {}
-        let updates = {}
+        if(String(userId) !== String(requester.id) && !["supervisor", "technical"].includes(requester.type)) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, user: userId}, "UPDATE")
+        }
 
+        if(!["supervisor", "technical"].includes(requester.type) && data.type != undefined) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("Privilege escalation attempt.", { requester }, "UPDATE")
+        }
+
+        let errors = {}
+
+        const userUpdated = await User.findById(userId).select('name email type -password');
+        
         if(!userUpdated) return {
             success: false,
-            statusCode: 404,
-            message: "User not found."
+            error: "NOT_FOUND"
         }
 
-        if((requester.type != "user" || requester.type != "supervisor" || requester.type != "technical") && !requesterId) return {
-            success: false,
-            statusCode: 403,
-            message: "Invalid requester type."
-        }
+        let updates = validateFields(data)
 
-        if(requester.type === "user" && id !== requesterId) return {
-            success: false,
-            statusCode: 403,
-            message: "Invalid request"
-        }
+        errors = validateUserData(updates, userSchema, errors)
 
-        const permission = {
-            "type": {
-                supervisor: ['name', 'email', 'password', 'type'], technical: ['name', 'email', 'password', 'type'],
-                user: ['name', 'email', 'password']
-            }
-        }
-
-        const allowedFields = permission.type[requester.type] || permission.type.user
-
-        validateFields(data, allowedFields, updates)
-
-        validateUserData(updates, userSchema, errors)
         if(Object.keys(errors).length > 0) return {
             success: false,
-            statusCode: 422,
-            message: errors
+            error: "UNPROCESSABLE_CONTENT",
+            labels: errors
         }
 
         updates = filterUpdates(updates, userUpdated)
 
+        
         if(Object.keys(updates).length == 0) return {
             success: true,
-            statusCode: 200,
-            message: "Nenhum dado foi atualizado."
+            data: userUpdated
         }
 
-        const user = await User.findByIdAndUpdate(
-            id,
-            { $set: updates },
-            { returnDocument: 'after', runValidators: true }
-        )
-        return { user, success: true, statusCode: 204, message: "Updated." }
+        userUpdated.set(updates)
+        
+        await userUpdated.save()
+        const user = userUpdated.toObject()
+        delete user.password
+
+        return { 
+            success: true, 
+            data: user,
+            log: loggingMessageConstructor("Success to update user data.", { requester, target: user, updated: updates }, "UPDATE")
+        }
     }
 
     // RETORNAR ERROS AO CONTROLLER

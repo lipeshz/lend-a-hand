@@ -10,6 +10,7 @@ log
 
 user
     - resposta do backend deve ser uma função (pq repete muito), mapper?
+    - reavaliar regras de negócio (lógica tá paia)
         - update
             - organizar código
             - criar sistema de log para ver quem foi editado, o que, quando e por quem

@@ -1,14 +1,15 @@
 const { update } = require("../services/UserService");
 
-function validateFields(data, allowedFields, updates){
-    Object.keys(data).forEach(function(key){
-        if(Object.values(allowedFields).includes(key) && data[key] !== undefined){
-            updates[key] = data[key]
-        }
-    });
-    // console.log(allowedFields)
-    // console.log(updates)
-    // console.log(data)
+function validateFields(data){
+    // Object.keys(data).forEach(function(key){
+    //     if(Object.values(allowedFields).includes(key) && data[key] !== undefined){
+    //         updates[key] = data[key]
+    //     }
+    // });
+    updates = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
+
     return updates
 }
 
@@ -23,6 +24,7 @@ function filterUpdates(updateData, userData){
 
 // Validação dos campos do usuário
 const validateUserData = (data, schema, errors) => {
+
     Object.keys(data).forEach(function(key){
         const rules = schema[key]
         const value = data[key]
