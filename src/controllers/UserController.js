@@ -61,42 +61,29 @@ const UserController = {
         }
     },
 
-    async delete(req, res, next){
+    async login(req, res, next){
         try{
-            const { id } = req.params
-            const { userId } = req
-            const result = await UserService.delete(id, userId)
+            const { email, password } = req.body
+            const result = await UserService.login({ email, password })
             if(result.log) loggingMessage(result.log)
-            if(!result.success){
-                return res.status(result.statusCode).json({
-                    status: "error",
-                    message: result.message
-                })
-            }
-
-            return res.status(result.statusCode).json(result)
+            if(!result.success) return responseErrorController(res, result)
+            
+            return res.status(200).json(result)
         }catch(error){
             next(error)
         }
     },
 
-    async login(req, res, next){
+    async delete(req, res, next){
         try{
-            const { email, password } = req.body
-            const result = await UserService.login({ email, password })
+            const { id } = req.params
+            const result = await UserService.delete(id, req.user)
+            if(result.log) loggingMessage(result.log)
+            if(!result.success) return responseErrorController(res, result)
 
-            if(!result.success){
-                return res.status(result.statusCode).json({
-                    status: "error",
-                    message: result.message
-                })
-            }
-            
-            return res.status(result.statusCode).json(result)
+            return res.status(204).json(result)
         }catch(error){
-            if(error){
-                next(error)
-            }
+            next(error)
         }
     }
 }

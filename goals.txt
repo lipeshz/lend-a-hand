@@ -9,15 +9,12 @@ log
     - função universal de erros que insere o erro no log (permissão)
 
 user
-    - resposta do backend deve ser uma função (pq repete muito), mapper?
+    - função de retorno de errors e success
     - reavaliar regras de negócio (lógica tá paia)
         - update
-            - organizar código
-            - criar sistema de log para ver quem foi editado, o que, quando e por quem
-        - show e index
-            - criar um sistema de log para ver quem tentou acessar os usuários, quando e por quem
-        - login
+            - parar de editar dados que não mudaram
         - delete
+            - padronizar retorno de erros
             - criar sistema de log para ver quem foi deletado, quando e por quem
 
         - refatorar e organizar o código do usuário antes de ir ao ticket

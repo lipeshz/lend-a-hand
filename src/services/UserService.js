@@ -47,7 +47,8 @@ class UserService{
 
         return { 
             success: true, 
-            data: user 
+            data: user,
+            log: loggingMessageConstructor("User created succefully.", { requester, target: user }, "CREATE")
         };
     }
 
@@ -162,8 +163,8 @@ class UserService{
 
         if(!pwMatch || !userObj) return {
             success: false,
-            status: 401,
-            message: "The passwords doesn't match."
+            error: "UNAUTHORIZED",
+            labels: "E-mail or password are incorrect."
         }
 
         const token = jwt.sign(
@@ -176,39 +177,35 @@ class UserService{
         delete user.password;
         delete user.__v;
 
-        return {user, token}
+        return {
+            success: true,
+            data: user,
+            token
+        }
     }
 
-    async delete(userId, requesterId){
-        const user = await User.findById(userId)
+    async delete(userId, requester){
+
+        if(String(requester.id) == String(userId) || !["supervisor", "technical"].includes(requester.type)) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("The requester doesn't have permission to delete this data.", { requester, target: userId}, "DELETE")
+        }
+
+        const user = await User.findByIdAndDelete(userId)
+        const log_user = user.toObject()
+        delete log_user.password
+        delete log_user.__v
+
         if(!user) return {
             success: false,
-            statusCode: 404,
-            message: "User not found."
+            error: "NOT_FOUND",
         }
 
-        const requester = await User.findById(requesterId)
-        if(!requester) return {
-            success: false,
-            statusCode: 403,
-            message: "Forbidden."
+        return { 
+            success: true,
+            log: loggingMessageConstructor("User deleted with success.", { requester, target: log_user}, "DELETE")
         }
-
-        if(requesterId == userId) return {
-            success: false,
-            statusCode: 403,
-            message: "Forbidden."
-        }
-
-        if(requester.type != "supervisor" && requester.type != "technical") return {
-            success: false,
-            statusCode: 403,
-            message: "Forbidden."
-        }
-
-        await User.findByIdAndDelete(userId)
-
-        return { success: true, statusCode: 200, message: "User succefully deleted."}
     }
 }
 
