@@ -8,29 +8,28 @@ const { loggingMessageConstructor } = require('../utils/logFile')
 
 class UserService{
     async store(data, requester) {
-        if(requester.type != "supervisor" && requester.type != "technical") return {
+        if(!["supervisor", "technical"].includes(requester.type)) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to create a new user.", { requester }, "CREATE")
         }
 
-        const {name, email, password, conf_password, type} = data
-        const userExists = await User.findOne({email: data.email})
         const errors = {}
-
-        // Verifica se o usuário existe (para não ficar fazendo requisições a toa)
-        if(userExists) return {
-            success: false,
-            error: "USER_ALREADY_EXISTS",
-        }
-
-        // Validação
         validateUserData(data, userSchema, errors)
 
         if(Object.keys(errors).length > 0) return {
             success: false,
             error: "UNPROCESSABLE_CONTENT",
             labels: errors
+        }
+
+        const { name, email, password, conf_password, type } = data
+        const userExists = await User.findOne({email: data.email})
+
+        // Verifica se o usuário existe (para não ficar fazendo requisições a toa)
+        if(userExists) return {
+            success: false,
+            error: "USER_ALREADY_EXISTS",
         }
 
         const userObj = await User.create({
@@ -73,11 +72,17 @@ class UserService{
     }
 
     async show(userId, requester){
+        if(!mongoose.Types.ObjectId.isValid(userId)) return {
+            success: false,
+            error: "BAD_REQUEST",
+            log: loggingMessageConstructor("The ID format is invalid.", { requester, target: userId}, "UPDATE")
+        }
+
         if(String(userId) != String(requester.id) && !["supervisor", "technical"].includes(requester.type)) return {
-                success: false,
-                error: "FORBIDDEN",
-                log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, target: userId }, "SHOW")
-            }
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, target: userId }, "SHOW")
+        }
 
         const user = await User.findById(userId).select('name email type').lean()
 
@@ -98,13 +103,13 @@ class UserService{
         if(!mongoose.Types.ObjectId.isValid(userId)) return {
             success: false,
             error: "BAD_REQUEST",
-            log: loggingMessageConstructor("The ID format is invalid.", { requester, user: userId}, "UPDATE")
+            log: loggingMessageConstructor("The ID format is invalid.", { requester, target: userId}, "UPDATE")
         }
 
         if(String(userId) !== String(requester.id) && !["supervisor", "technical"].includes(requester.type)) return {
             success: false,
             error: "FORBIDDEN",
-            log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, user: userId}, "UPDATE")
+            log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, target: userId}, "UPDATE")
         }
 
         if(!["supervisor", "technical"].includes(requester.type) && data.type != undefined) return {
@@ -115,12 +120,16 @@ class UserService{
 
         let errors = {}
 
-        const userUpdated = await User.findById(userId).select('name email type -password');
-        
+        const userUpdated = await User.findById(userId)
+
         if(!userUpdated) return {
             success: false,
             error: "NOT_FOUND"
         }
+
+        const userUpdateLog = userUpdated.toObject()
+        delete userUpdateLog.password
+        delete userUpdateLog.__v
 
         let updates = validateFields(data)
 
@@ -149,7 +158,7 @@ class UserService{
         return { 
             success: true, 
             data: user,
-            log: loggingMessageConstructor("Success to update user data.", { requester, target: user, updated: updates }, "UPDATE")
+            log: loggingMessageConstructor("Success to update user data.", { requester, userUpdateLog, target: user, updated: Object.keys(updates) }, "UPDATE")
         }
     }
 
@@ -159,16 +168,22 @@ class UserService{
         const { email, password } = data
         let userObj = await User.findOne({ email: email })
 
+        if(!userObj) return {
+            success: false,
+            error: "UNAUTHORIZED",
+            labels: "E-mail or password are incorrect."
+        }
+
         const pwMatch = await userObj.comparePassword(password)
 
-        if(!pwMatch || !userObj) return {
+        if(!pwMatch) return {
             success: false,
             error: "UNAUTHORIZED",
             labels: "E-mail or password are incorrect."
         }
 
         const token = jwt.sign(
-            {id: userObj.id, email: userObj.email},
+            {id: userObj.id, email: userObj.email, type: userObj.type},
             process.env.JWT_SECRET,
             {expiresIn: '7d'}
         )
@@ -186,25 +201,30 @@ class UserService{
 
     async delete(userId, requester){
 
+        if(!mongoose.Types.ObjectId.isValid(userId)) return {
+            success: false,
+            error: "BAD_REQUEST",
+            log: loggingMessageConstructor("The ID format is invalid.", { requester, target: userId}, "DELETE")
+        }
+
         if(String(requester.id) == String(userId) || !["supervisor", "technical"].includes(requester.type)) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to delete this data.", { requester, target: userId}, "DELETE")
         }
 
-        const user = await User.findByIdAndDelete(userId)
-        const log_user = user.toObject()
-        delete log_user.password
-        delete log_user.__v
-
+        const user = await User.findByIdAndDelete(userId).lean()
         if(!user) return {
             success: false,
             error: "NOT_FOUND",
         }
 
+        delete user.password
+        delete user.__v
+
         return { 
             success: true,
-            log: loggingMessageConstructor("User deleted with success.", { requester, target: log_user}, "DELETE")
+            log: loggingMessageConstructor("User deleted with success.", { requester, target: user}, "DELETE")
         }
     }
 }

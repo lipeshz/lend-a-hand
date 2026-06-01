@@ -1,5 +1,6 @@
 const { appendFile } = require('fs/promises')
 const path = require('path');
+const { show } = require('../services/UserService');
 const currentDate = new Date();
 
 async function loggingMessage(content){
@@ -12,14 +13,15 @@ async function loggingMessage(content){
 }
 
 function loggingMessageConstructor(message, data, action){
+    const reqData = JSON.stringify(data, null, 2)
+    .replace(/[{}[\]",]/g, '')
+    .trim();
+    
+    let dataMessage = reqData
     let returnMessage = `DATE: ${currentDate}\n` +
-    `ERROR: ${message}\n` +
+    `STATUS: ${message}\n` +
     `ACTION: ${action}\n` +
-    `REQUESTER INFO: id: ${data.requester.id}, name: ${data.requester.name}, email: ${data.requester.email}, type: ${data.requester.type}\n`
-
-    if(data.target) returnMessage += `TARGET: id: ${data.target._id}, name: ${data.target.name}, email: ${data.target.email}, type: ${data.target.type}\n`
-    if(data.filter) returnMessage += `FILTERS: ${data.filter}\n`
-    if(data.updated) returnMessage += `UPDATED: ${Object.keys(data.updated)} \n`
+    `REQUEST INFO: \n ${dataMessage}\n`
 
     return returnMessage
 }

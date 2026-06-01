@@ -14,7 +14,9 @@ const authMiddleWare = async (req, res, next) => {
         // Valida o token e injeta no header para os outros controllers poderem acessar
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        const user = await User.findById(decoded.id).select('name email type')
+        const user = await User.findById(decoded.id).select('name email type').lean()
+        delete user.password
+        delete user.__v
         if(!user) return res.status(401).send({error: "The user doesn't exists."})
             
         req.user = user

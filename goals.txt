@@ -9,14 +9,9 @@ log
     - função universal de erros que insere o erro no log (permissão)
 
 user
+    - padronizar o recebimento de dados dos services por meio do controller
     - função de retorno de errors e success
     - reavaliar regras de negócio (lógica tá paia)
-        - update
-            - parar de editar dados que não mudaram
-        - delete
-            - padronizar retorno de erros
-            - criar sistema de log para ver quem foi deletado, quando e por quem
-
         - refatorar e organizar o código do usuário antes de ir ao ticket
 
 ticket
