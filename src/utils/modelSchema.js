@@ -26,25 +26,26 @@ const imageRegex = /^[\w,\s-]+\.(jpe?g|png)$/i;
 
 const ticketSchema = {
     title: [
-        { test: (val) => val && val.trim().length > 0 && val.length <= 60, message: "Invalid title!"}
+        { test: (val) => !!val && val.length > 0 && val.length <= 60, message: "Invalid title!"}
     ],
     desc: [
-        { test: (val) => !val.length == 0 || !val.length > 200, message: "Invalid description!"}
+        { test: (val) => !!val && !val.length == 0 || !val.length > 200, message: "Invalid description!"}
     ],
     urgency: [
-        { test: (val) => ["very urgent", "urgent", "non urgent"].includes(val), message: "Invalid urgency level!"}
+        { test: (val) => !!val && ["very urgent", "urgent", "non urgent"].includes(val), message: "Invalid urgency level!"}
     ],
     category: [
-        { test: (val) => ["hardware", "software", "conectivity"].includes(val), message: "Invalid category!"}
+        { test: (val) => !!val && ["hardware", "software", "conectivity"].includes(val), message: "Invalid category!"}
     ],
     image: [
-        { test: (val) => imageRegex.test(val), message: "Invalid image format!"}
+        { test: (val) => (!val || val.trim() === "") ? true : imageRegex.test(val), 
+        message: "Invalid image format!" }
     ],
     status: [
-        { test: (val) => ["open", "pending", "in service", "closed", "solved"].includes(val), message: "Invalid status!"}
+        { test: (val) => !!val && ["open", "pending", "in service", "closed", "solved"].includes(val), message: "Invalid status!"}
     ],
     openDate: [
-        { test: (val) => !isNaN(Date.parse(val)), message: "Invalid date format!" }
+        { test: (val) => !!val && !isNaN(Date.parse(val)), message: "Invalid date format!" }
     ]
 }
 

@@ -9,6 +9,7 @@ const ticketRoutes = Router();
 // Definição da rota
 // ticketRoutes.post('/register', ticketController.register);
 ticketRoutes.post('/ticket', authMiddleWare, TicketController.store);
+ticketRoutes.get('/ticket', authMiddleWare, TicketController.index);
 
 ticketRoutes.use(errorHandler)
 // Exportação obrigatória para o index.js das rotas

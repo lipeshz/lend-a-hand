@@ -1,3 +1,4 @@
+const { Ticket } = require('../models/schema')
 const TicketService = require('../services/TicketService')
 const { loggingMessage } = require('../utils/logFile')
 const { responseErrorController } = require('../utils/responseErrorController')
@@ -15,7 +16,33 @@ const TicketController = {
         }catch(error){
             next(error)
         }
-    }    
+    },
+    
+    async index(req, res, next){
+        try{
+            const { creator, title, urgency, category, status, openDate, closeDate } = req.params
+            const result = await TicketService.index({ title, urgency, category, status, openDate, closeDate }, req.user)
+            console.log(result)
+
+            return res.status(200).json(result)
+        }catch(error){
+            next(error)
+        }
+    },
+
+    async show(req, res, next){
+        try{
+            const { _id } = req.params
+            const result = await TicketService.show(id, req.user)
+
+            if(result.log) loggingMessage(result.log)
+            if(!result.success) return responseErrorController(res, result)
+
+            return res.status(200).json(result)
+        }catch(error){
+            next(error)
+        }
+    }
 }
 
 module.exports = TicketController

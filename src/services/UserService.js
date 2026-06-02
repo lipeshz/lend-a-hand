@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose')
 const { User } = require('../models/schema')
 const { validateUserData, validateFields, filterUpdates } = require('../utils/validateFields')
-const userSchema = require('../utils/modelSchema')
+const { userSchema }  = require('../utils/modelSchema')
 const filterFields = require('../utils/filterFields')
 const { loggingMessageConstructor } = require('../utils/logFile')
 
