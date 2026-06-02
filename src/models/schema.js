@@ -22,6 +22,20 @@ userSchema.methods.comparePassword = async function(password){
     return await bcrypt.compare(password, this.password)
 }
 
-const User = mongoose.model('User', userSchema)
+const ticketSchema = new mongoose.Schema({
+    title: { type: String, required: true, maxLength: 60 },
+    desc: { type: String, required: true, maxLength: 200},
+    urgency: { type: String, required: true, enum: ['very urgent', 'urgent', 'non urgent'] },
+    category: { type: String, required: true, enum: ['hardware', 'software', 'conectivity'] },
+    image: { type: String, required: false },
+    status: { type: String, required: true, enum: ['open', 'pending', 'in service', 'closed', 'solved'] },
+    openDate: { type: Date, required: true },
+    closeDate: { type: Date, required: false },
+    creator: { type: String, required: true },
+    technical: { type: String, required: false }
+})
 
-module.exports = { User }
+const User = mongoose.model('User', userSchema)
+const Ticket = mongoose.model('Ticket', ticketSchema)
+
+module.exports = { User, Ticket }

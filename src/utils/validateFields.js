@@ -28,7 +28,7 @@ const validateUserData = (data, schema, errors) => {
     Object.keys(data).forEach(function(key){
         const rules = schema[key]
         const value = data[key]
-
+        
         if(rules){
             // rules.forEach(rule => {
             //     if(!rule.test(value, data)){
@@ -40,6 +40,7 @@ const validateUserData = (data, schema, errors) => {
                 errors[key] = failedRule.message // Acessar a message pelo failedRule
         }
     })
+    
     return errors
 }
 

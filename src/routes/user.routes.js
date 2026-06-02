@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { authMiddleWare } = require('../middlewares/authMiddleWare')
 const { errorHandler } = require('../middlewares/errorMiddleWare')
 const { User } = require('../models/schema')
-const UserController = require('../controllers/UserController'); // Note que removemos o .js
+const UserController = require('../controllers/UserController');
 
 const userRoutes = Router();
 

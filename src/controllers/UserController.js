@@ -1,5 +1,4 @@
-// Importamos o service usando require
-const { User } = require('../models/schema');
+
 const UserService = require('../services/UserService');
 const { responseErrorController } = require('../utils/responseErrorController')
 const { loggingMessage } = require('../utils/logFile');
