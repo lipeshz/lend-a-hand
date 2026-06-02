@@ -7,7 +7,7 @@ const TicketController = {
         try{
             const { title, desc, urgency, category, image, status, openDate } = req.body
             const result = await TicketService.store({ title, desc, urgency, category, image, status, openDate }, req.user)
-            
+
             if(result.log) loggingMessage(result.log)
             if(!result.success) return responseErrorController(res, result)
 

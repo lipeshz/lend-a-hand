@@ -3,6 +3,8 @@ OBJETIVOS:
 log
 
 user
+    - store
+        - quando o dado não vem no body, ele passa direto -> função tira undefined, não passa na validação do schema e bate no create do mongoose
 
 ticket
     - criar rotas do ticket
@@ -11,19 +13,21 @@ ticket
     - criar schema de validação rule map
     
     - store
-        - todos os usuarios podem criar
-        - somente o criador e supervisor/technical podem excluir
-        - somente o criador pode editar
+        - quando o dado não vem no body, ele passa direto -> função tira undefined, não passa na validação do schema e bate no create do mongoose
+        regras:
+            - todos os usuarios podem criar
+            - somente o criador e supervisor/technical podem excluir
+            - somente o criador pode editar
 
-        - titulo
-        - descrição
-        - urgencia (urgentissímo, urgente, rotina, ...)
-        - categoria (hardware, software, conectividade, ...)
-        - imagem
-        - status (aberto, em atendimento, pendente, fechado [quando o criador desiste], solucionado [quando o tecnico fecha])
-        - data e hora de abertura
-        - data e hora de fechamento/solução
-        - tecnico responsavel (id)
+            - titulo
+            - descrição
+            - urgencia (urgentissímo, urgente, rotina, ...)
+            - categoria (hardware, software, conectividade, ...)
+            - imagem
+            - status (aberto, em atendimento, pendente, fechado [quando o criador desiste], solucionado [quando o tecnico fecha])
+            - data e hora de abertura
+            - data e hora de fechamento/solução
+            - tecnico responsavel (id)
 
     - show e index (log)
     - update (log)

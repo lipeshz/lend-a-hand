@@ -26,7 +26,7 @@ const imageRegex = /^[\w,\s-]+\.(jpe?g|png)$/i;
 
 const ticketSchema = {
     title: [
-        { test: (val) => !val.length == 0 || !val.length > 60, message: "Invalid title!"}
+        { test: (val) => val && val.trim().length > 0 && val.length <= 60, message: "Invalid title!"}
     ],
     desc: [
         { test: (val) => !val.length == 0 || !val.length > 200, message: "Invalid description!"}
