@@ -1,6 +1,4 @@
-const { update } = require("../services/UserService");
-
-function validateFields(data){
+function removeUndefinedFields(data){
     // Object.keys(data).forEach(function(key){
     //     if(Object.values(allowedFields).includes(key) && data[key] !== undefined){
     //         updates[key] = data[key]
@@ -23,7 +21,7 @@ function filterUpdates(updateData, userData){
 }
 
 // Validação dos campos do usuário
-const validateUserData = (data, schema, errors) => {
+const schemaValidation = (data, schema, errors) => {
 
     Object.keys(data).forEach(function(key){
         const rules = schema[key]
@@ -44,8 +42,12 @@ const validateUserData = (data, schema, errors) => {
     return errors
 }
 
+const verifyAllowedFields = () => {
+    
+}
+
 module.exports = { 
-    validateFields, 
-    validateUserData,
+    removeUndefinedFields, 
+    schemaValidation,
     filterUpdates
 }

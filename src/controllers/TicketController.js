@@ -22,7 +22,9 @@ const TicketController = {
         try{
             const { creator, title, urgency, category, status, openDate, closeDate } = req.params
             const result = await TicketService.index({ title, urgency, category, status, openDate, closeDate }, req.user)
-            console.log(result)
+            
+            if(result.log) loggingMessage(result.log)
+            if(!result.success) return responseErrorController(res, result)
 
             return res.status(200).json(result)
         }catch(error){
@@ -34,6 +36,34 @@ const TicketController = {
         try{
             const { _id } = req.params
             const result = await TicketService.show(id, req.user)
+
+            if(result.log) loggingMessage(result.log)
+            if(!result.success) return responseErrorController(res, result)
+
+            return res.status(200).json(result)
+        }catch(error){
+            next(error)
+        }
+    },
+
+    async update(req, res, next){
+        try{
+            const { id, title, desc, urgency, category, image, status, closeDate, technical } = req.body
+            const result = await TicketService.update({ id, title, desc, urgency, category, image, status, closeDate, technical }, req.user)
+
+            if(result.log) loggingMessage(result.log)
+            if(!result.success) return responseErrorController(res, result)
+
+            return res.status(200).json(result)
+        }catch(error){
+            next(error)
+        }
+    },
+
+    async delete(req, res, next){
+        try{
+            const { id } = req.params
+            const result = await TicketService.delete(id, req.user);
 
             if(result.log) loggingMessage(result.log)
             if(!result.success) return responseErrorController(res, result)

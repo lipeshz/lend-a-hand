@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose')
 const { User } = require('../models/schema')
-const { validateUserData, validateFields, filterUpdates } = require('../utils/validateFields')
+const { schemaValidation, removeUndefinedFields, filterUpdates } = require('../utils/validateFields')
 const { userSchema }  = require('../utils/modelSchema')
 const filterFields = require('../utils/filterFields')
 const { loggingMessageConstructor } = require('../utils/logFile')
@@ -15,7 +15,7 @@ class UserService{
         }
 
         const errors = {}
-        validateUserData(data, userSchema, errors)
+        schemaValidation(data, userSchema, errors)
 
         if(Object.keys(errors).length > 0) return {
             success: false,
@@ -131,9 +131,9 @@ class UserService{
         delete userUpdateLog.password
         delete userUpdateLog.__v
 
-        let updates = validateFields(data)
+        let updates = removeUndefinedFields(data)
 
-        errors = validateUserData(updates, userSchema, errors)
+        errors = schemaValidation(updates, userSchema, errors)
 
         if(Object.keys(errors).length > 0) return {
             success: false,
