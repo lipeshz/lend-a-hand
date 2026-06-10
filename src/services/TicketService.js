@@ -53,7 +53,7 @@ class TicketService{
         if(["user"].includes(requester.type) && String(ticket.creator) != requester._id) return {
             success: false,
             error: "FORBIDDEN",
-            log: loggingMessageConstructor("The requester does'nt have permission to access this data.", { requester, ticket }, "TICKET: SHOW")
+            log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, ticket }, "TICKET: SHOW")
         }
 
         return {
@@ -62,20 +62,18 @@ class TicketService{
         }
     }
 
-    async update(data, requester){
+    async update(ticketId, data, requester){
         let updates = {}
         let errors = {}
         updates = removeUndefinedFields(data)
-        console.log(updates)
-        console.log(data)
 
         const allowedFields = {
-            supervisor: [ "status", "closeDate", "technical" ],
-            technical: [ "status", "closeDate", "technical" ],
-            user: [ "title", "desc", "image", "urgency", "category", "status", "closeDate" ]
+            supervisor: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
+            technical: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
+            user: [ "status", "closeDate", "technical", "solution" ]
         }
 
-        if(!Object.keys(updates).includes(allowedFields[requester.type])) return {
+        if(Object.keys(updates).some(field => allowedFields[requester.type].includes(field))) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to change the technical.", { requester, updates }, "TICKET: UPDATE")
@@ -89,7 +87,25 @@ class TicketService{
             labels: errors
         }
 
-        const ticket = await Ticket.findById(data.id).select('-__v')
+        const { User } = require('../models/schema')
+
+        const technical = await User.findById(updates["technical"]) 
+        if(updates["technical"] && !["supervisor", "technical"].includes(technical.type)) return {
+            success: false,
+            error: "UNAUTHORIZED",
+            log: loggingMessageConstructor("The technical can't be a user.", { requester, target: ticketId, request: updates}, "TICKET: UPDATE")
+        }
+        
+        const ticketObj = await Ticket.findById(ticketId).select('-__v')
+
+        if(!ticketObj) return {
+            success: false,
+            error: "NOT_FOUND"
+        }
+
+        ticketObj.set(updates)
+        await ticketObj.save()
+        const ticket = ticketObj.toObject()
 
         return { 
             success: true,

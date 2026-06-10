@@ -1,4 +1,5 @@
 OBJETIVOS:
+- trocar os Object.keys().includes() por algo mais eficiente
 
 log
 
@@ -6,12 +7,6 @@ user
 
 ticket
     - refatorar o que estiver ruim
-
-banco de soluções
-    - ticket inteiro
-    - descrição da solução
-    - data de fechamento do ticket
-    - tecnico responsavel
 
 token
     - blacklist de tokens (redis)

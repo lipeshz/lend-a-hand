@@ -48,8 +48,9 @@ const TicketController = {
 
     async update(req, res, next){
         try{
-            const { id, title, desc, urgency, category, image, status, closeDate, technical } = req.body
-            const result = await TicketService.update({ id, title, desc, urgency, category, image, status, closeDate, technical }, req.user)
+            const { title, desc, urgency, category, image, status, closeDate, technical, solution } = req.body
+            const { id } = req.params
+            const result = await TicketService.update(id, { title, desc, urgency, category, image, status, closeDate, technical, solution }, req.user)
 
             if(result.log) loggingMessage(result.log)
             if(!result.success) return responseErrorController(res, result)

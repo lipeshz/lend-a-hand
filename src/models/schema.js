@@ -32,7 +32,8 @@ const ticketSchema = new mongoose.Schema({
     openDate: { type: Date, required: true },
     closeDate: { type: Date, required: false },
     creator: { type: String, required: true },
-    technical: { type: String, required: false }
+    technical: { type: String, required: false },
+    solution: { type: String, required: false, maxLength: 500 }
 })
 
 const User = mongoose.model('User', userSchema)
