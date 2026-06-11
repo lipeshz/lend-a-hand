@@ -1,6 +1,7 @@
 const { Ticket } = require('../models/schema');
 const { loggingMessageConstructor } = require('../utils/logFile');
 const { ticketSchema } = require('../utils/modelSchema');
+const mongoose = require('mongoose')
 const { removeUndefinedFields, schemaValidation } = require('../utils/validateFields');
 
 class TicketService{
@@ -28,11 +29,13 @@ class TicketService{
     async index(reqFilters, requester){
         const filters = removeUndefinedFields(reqFilters)
         let tickets = {}
-
-        if(["supervisor", "technical"].includes(requester.type)) tickets = await Ticket.find(filters).select('-__v')
         
-        if(requester.type === "user") tickets = await Ticket.find(filters).where('creator').equals(String(requester._id)).select('-__v')
-
+        if(requester.type == "supervisor" || requester.type == "technical") tickets = await Ticket.find(filters).lean()
+        
+        if(requester.type === "user"){ 
+            filters.creator = requester._id
+            tickets = await Ticket.find(filters).lean()
+        }
         return {
             success: true,
             data: tickets
@@ -42,18 +45,21 @@ class TicketService{
     async show(ticketId, requester){
         if(!mongoose.Types.ObjectId.isValid(ticketId)) return {
             success: false,
-            error: "BAD_REQUEST",
+            error: "NOT_FOUND",
             log: loggingMessageConstructor("The ticket ID format is invalid.", { requester, target: ticketId}, "TICKET: SHOW")
         }
 
         const ticket = await Ticket.findById(ticketId).select('-__v')
 
-        // if(["supervisor", "techical"].includes(requester.type)) 
+        if(!ticket) return {
+            success: false,
+            error: "NOT_FOUND"
+        }
 
-        if(["user"].includes(requester.type) && String(ticket.creator) != requester._id) return {
+        if(requester.type == "user" && String(ticket.creator) != String(requester._id)) return {
             success: false,
             error: "FORBIDDEN",
-            log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, ticket }, "TICKET: SHOW")
+            log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, target: ticket }, "TICKET: SHOW")
         }
 
         return {
@@ -67,16 +73,19 @@ class TicketService{
         let errors = {}
         updates = removeUndefinedFields(data)
 
-        const allowedFields = {
+        const notAllowedFields = {
             supervisor: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
             technical: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
             user: [ "status", "closeDate", "technical", "solution" ]
         }
 
-        if(Object.keys(updates).some(field => allowedFields[requester.type].includes(field))) return {
+        const forbiddenFields = notAllowedFields[requester?.type] || []
+        const invalidFieldAttempt = Object.keys(updates).find(field => forbiddenFields.includes(field));
+
+        if(invalidFieldAttempt) return {
             success: false,
             error: "FORBIDDEN",
-            log: loggingMessageConstructor("The requester doesn't have permission to change the technical.", { requester, updates }, "TICKET: UPDATE")
+            log: loggingMessageConstructor("The requester doesn't have permission to change this field.", { requester, update: updates }, "TICKET: UPDATE")
         }
 
         errors = schemaValidation(updates, ticketSchema, errors)
@@ -88,20 +97,27 @@ class TicketService{
         }
 
         const { User } = require('../models/schema')
-
-        const technical = await User.findById(updates["technical"]) 
-        if(updates["technical"] && !["supervisor", "technical"].includes(technical.type)) return {
-            success: false,
-            error: "UNAUTHORIZED",
-            log: loggingMessageConstructor("The technical can't be a user.", { requester, target: ticketId, request: updates}, "TICKET: UPDATE")
-        }
-        
-        const ticketObj = await Ticket.findById(ticketId).select('-__v')
+        const [ticketObj, technical] = await Promise.all([
+            Ticket.findById(ticketId).select('-__v'),
+            updates.technical ? User.findById(updates.technical).lean() : null
+        ])
 
         if(!ticketObj) return {
             success: false,
             error: "NOT_FOUND"
         }
+
+        if(technical && !["supervisor", "technical"].includes(technical.type)) return {
+            success: false,
+            error: "UNAUTHORIZED",
+            log: loggingMessageConstructor("The technical can't be a user.", { requester, target: ticketId, request: updates }, "TICKET: UPDATE")
+        }
+
+        if(!["supervisor", "technical"].includes(requester.type) && String(requester.id) != String(ticketObj.creator)) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("The requester doesn't have permission to access this ticket.", { requester, target: ticketObj, update: updates }, "TICKET: UPDATE")
+        }   
 
         ticketObj.set(updates)
         await ticketObj.save()
@@ -109,7 +125,7 @@ class TicketService{
 
         return { 
             success: true,
-            data: updates
+            data: ticket
         }
     }
 
@@ -120,7 +136,8 @@ class TicketService{
             log: loggingMessageConstructor("The requester doesn't have permission to delete this ticket.", { requester, target: ticketId }, "TICKET: DELETE")
         }
 
-        const ticket = await Ticket.findOneAndDelete(ticketId).lean()
+        const ticket = await Ticket.findByIdAndDelete(ticketId).lean()
+
         if(!ticket) return {
             success: false,
             error: "NOT_FOUND",

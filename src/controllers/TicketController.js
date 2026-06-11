@@ -21,7 +21,7 @@ const TicketController = {
     async index(req, res, next){
         try{
             const { creator, title, urgency, category, status, openDate, closeDate } = req.params
-            const result = await TicketService.index({ title, urgency, category, status, openDate, closeDate }, req.user)
+            const result = await TicketService.index({ creator, title, urgency, category, status, openDate, closeDate }, req.user)
             
             if(result.log) loggingMessage(result.log)
             if(!result.success) return responseErrorController(res, result)
