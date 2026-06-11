@@ -4,6 +4,7 @@ OBJETIVOS:
 log
 
 user
+    - logout da undefined na função do block token
 
 ticket
     - refatorar o que estiver ruim

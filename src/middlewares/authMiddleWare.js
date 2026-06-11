@@ -12,8 +12,8 @@ const authMiddleWare = async (req, res, next) => {
 
         const parts = authHeader.split(' ')[1]
         const token = parts
-
         const isBlocked = await CacheService.isTokenBlocked(token)
+        console.log(isBlocked)
         if(isBlocked){
             const message = loggingMessageConstructor("Blocked token use attempt.", { token: token.substring(0, 15) }, "AUTH")
             logginMessage(message)

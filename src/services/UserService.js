@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose')
 const { User } = require('../models/schema')
+const CacheService = require('../services/CacheService')
 const { schemaValidation, removeUndefinedFields, filterUpdates } = require('../utils/validateFields')
 const { userSchema }  = require('../utils/modelSchema')
 const filterFields = require('../utils/filterFields')
@@ -200,9 +201,9 @@ class UserService{
     }
 
     async logout(token) {
-        const { CacheService } = require('CacheService')
-        await CacheService.blockToken(token)
-
+        
+        const block = await CacheService.blockToken(token)
+        console.log("block: ", block)
         return {
             success: true,
         }

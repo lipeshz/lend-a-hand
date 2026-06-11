@@ -1,4 +1,4 @@
-const redisClient = require('../utils/redis')
+const client = require('../utils/redis')
 const jwt = require('jsonwebtoken')
 
 class CacheService{
@@ -13,7 +13,7 @@ class CacheService{
 
             if(timeLeftInSeconds <= 0) return;
 
-            await redisClient.set(`blacklist:${token}`, '1', {
+            await client.set(`blacklist:${token}`, '1', {
                 EX: timeLeftInSeconds
             })
         }catch(error){
@@ -22,8 +22,8 @@ class CacheService{
     }
 
     async isTokenBlocked(token){
-        const tokenExists = await redisClient.exists(`blacklist:${token}`);
-        return exists === 1;
+        const tokenExists = await client.exists(`blacklist:${token}`);
+        return tokenExists === 1;
     }
 }
 

@@ -10,6 +10,8 @@ const userRoutes = Router();
 // Insere um usuário
 userRoutes.post('/users', authMiddleWare, UserController.store);
 
+userRoutes.post('/users/logout', authMiddleWare, UserController.logout);
+
 // Retorna os usuários
 userRoutes.get('/users', authMiddleWare, UserController.index);
 

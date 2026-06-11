@@ -73,6 +73,24 @@ const UserController = {
         }
     },
 
+    async logout(req, res, next){
+        try{
+            const authHeader = req.headers.authorization
+        // Retorna um erro caso o token não exista
+            const token = authHeader.split(' ')[1]
+
+            const result = await UserService.logout(token)
+
+            if(result.log) loggingMessage(result.log)
+
+            if(!result.success) return responseErrorController(res, result)
+
+            return res.status(200).json(result)
+        }catch(error){
+            next(error)
+        }
+    },
+
     async delete(req, res, next){
         try{
             const { id } = req.params
