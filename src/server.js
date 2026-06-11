@@ -1,4 +1,5 @@
 require('dotenv').config()
+require('./utils/redis')
 const mongoose = require('mongoose')
 const express = require('express');
 const dns = require("dns");

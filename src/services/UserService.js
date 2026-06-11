@@ -199,6 +199,15 @@ class UserService{
         }
     }
 
+    async logout(token) {
+        const { CacheService } = require('CacheService')
+        await CacheService.blockToken(token)
+
+        return {
+            success: true,
+        }
+    }
+
     async delete(userId, requester){
 
         if(!mongoose.Types.ObjectId.isValid(userId)) return {
