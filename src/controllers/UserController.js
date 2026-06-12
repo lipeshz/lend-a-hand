@@ -78,7 +78,6 @@ const UserController = {
             const authHeader = req.headers.authorization
         // Retorna um erro caso o token não exista
             const token = authHeader.split(' ')[1]
-
             const result = await UserService.logout(token)
 
             if(result.log) loggingMessage(result.log)

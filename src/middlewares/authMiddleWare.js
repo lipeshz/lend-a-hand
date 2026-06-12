@@ -16,7 +16,7 @@ const authMiddleWare = async (req, res, next) => {
         console.log(isBlocked)
         if(isBlocked){
             const message = loggingMessageConstructor("Blocked token use attempt.", { token: token.substring(0, 15) }, "AUTH")
-            logginMessage(message)
+            loggingMessage(message)
 
             return res.status(401).send({error: "Unauthorized."})
         }
