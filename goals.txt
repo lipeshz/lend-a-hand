@@ -1,14 +1,9 @@
 OBJETIVOS:
-- trocar os Object.keys().includes() por algo mais eficiente
 
 log
 
 user
-    - logout da undefined na função do block token
 
 ticket
-    - refatorar o que estiver ruim
 
 token
-    - blacklist de tokens (redis)
-    - logfile receber quando um token não válido tentar usar o sistema

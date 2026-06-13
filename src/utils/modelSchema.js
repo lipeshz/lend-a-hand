@@ -1,24 +1,27 @@
-const nameRegex = /^[A-Za-z0-9]{6,10}$/
-const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail|outlook|hotmail)\.com$/
+const nameRegex = /^[A-Za-zÀ-ÿ\s]{6,50}$/
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$/
 
 const userSchema = {
     name: [
-        { test: (val) => nameRegex.test(val), message: "Invalid name!" }
+        { test: (val) => val !== null, message: "The field name cannot be empty."},
+        { test: (val) => typeof(val) === "string" && nameRegex.test(val), message: "Invalid name! Must be 6 to 50 characters and cannot contain special characters." }
     ],
     email: [
-        { test: (val) => emailRegex.test(val), message: "Invalid e-mail" }
-        // Validar e-mail único
+        { test: (val) => val !== null, message: "The field e-mail cannot be empty."},
+        { test: (val) => typeof(val) === "string" && emailRegex.test(val), message: "Invalid e-mail format or domain!" }
     ],
     password: [
-        { test: (val) => passwordRegex.test(val), message: "Invalid password!" }
+        { test: (val) => val !== null, message: "The field password cannot be empty."},
+        { test: (val) => typeof(val) === "string" && passwordRegex.test(val), message: "Invalid password! Must be at least 6 characters, contain 1 uppercase, 1 number, and 1 special character." }
     ],
     conf_password: [ 
-        { test: (val) => passwordRegex.test(val), message: "Invalid password!" },
-        { test: (val, data) => val === data.password, message: "Password doesn't match!" }
+        { test: (val) => val !== null, message: "The field password cannot be empty."},
+        { test: (val, data) => typeof(val) === "string" && data && val === data.password, message: "Password doesn't match!" }
     ],
     type: [
-        { test: (val) => ["supervisor", "user", "technical"].includes(val), message: "Invalid type" }
+        { test: (val) => val !== null, message: "The field type cannot be empty."},
+        { test: (val) => typeof(val) === "string" && ["supervisor", "user", "technical"].includes(val), message: "Invalid type!" }
     ]
 }
 

@@ -6,10 +6,11 @@ const { userSchema }  = require('../utils/modelSchema')
 const CacheService = require('../services/CacheService')
 const filterFields = require('../utils/filterFields')
 const { loggingMessageConstructor } = require('../utils/logFile')
+const { ROLES, USER_RULES } = require('../utils/permissions')
 
 class UserService{
     async store(data, requester) {
-        if(!["supervisor", "technical"].includes(requester.type)) return {
+        if(!USER_RULES.CREATE_USER.includes(requester.type)) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to create a new user.", { requester }, "CREATE")
@@ -33,27 +34,41 @@ class UserService{
             error: "USER_ALREADY_EXISTS",
         }
 
-        const userObj = await User.create({
+        try{
+            const userObj = await User.create({
                 name,
                 email,
                 password,
                 type
-        })
+            })
 
-        // Retorna o usuário sem senha por segurança
-        const user = userObj.toObject()
-        delete user.password;
-        delete user.__v;
+            // Retorna o usuário sem senha por segurança
+            const user = userObj.toObject()
+            delete user.password;
+            delete user.__v;
 
-        return { 
-            success: true, 
-            data: user,
-            log: loggingMessageConstructor("User created succefully.", { requester, target: user }, "CREATE")
-        };
+            return { 
+                success: true, 
+                data: user,
+                log: loggingMessageConstructor("User created succefully.", { requester, target: user }, "CREATE")
+            };
+        }catch(error){
+            if(error.code == 11000) return {
+                success: false,
+                error: "USER_ALREADY_EXISTS",
+                log: loggingMessageConstructor(error.message, { }, "USER: STORE")
+            }
+
+            return {
+                success: false,
+                error: "INTERNAL_SERVER_ERROR",
+                log: loggingMessageConstructor(error.message, { }, "USER: STORE")
+            }
+        }
     }
 
     async index(filters, requester){
-        if(requester.type != "supervisor" && requester.type != "technical") return {
+        if(!USER_RULES.VIEW_ALL_USERS.includes(requester.type)) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to view other users.", { requester, filter: JSON.stringify(filters) }, "INDEX")
@@ -79,7 +94,9 @@ class UserService{
             log: loggingMessageConstructor("The ID format is invalid.", { requester, target: userId}, "UPDATE")
         }
 
-        if(String(userId) != String(requester.id) && !["supervisor", "technical"].includes(requester.type)) return {
+        const isOwner = String(userId) === String(requester._id)
+
+        if(!isOwner && !USER_RULES.VIEW_ALL_USERS.includes(requester.type)) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, target: userId }, "SHOW")
@@ -107,13 +124,16 @@ class UserService{
             log: loggingMessageConstructor("The ID format is invalid.", { requester, target: userId}, "UPDATE")
         }
 
-        if(String(userId) !== String(requester.id) && !["supervisor", "technical"].includes(requester.type)) return {
+        const isOwner = String(userId) === String(requester._id)
+
+        if(!isOwner && !USER_RULES.UPDATE_USER.includes(requester.type)) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to access this data.", { requester, target: userId}, "UPDATE")
         }
 
-        if(!["supervisor", "technical"].includes(requester.type) && data.type != undefined) return {
+        let updates = removeUndefinedFields({ ...data})
+        if(updates.type !== undefined && !USER_RULES.CHANGE_ROLE.includes(requester.type) ) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("Privilege escalation attempt.", { requester }, "UPDATE")
@@ -132,8 +152,6 @@ class UserService{
         delete userUpdateLog.password
         delete userUpdateLog.__v
 
-        let updates = removeUndefinedFields(data)
-
         errors = schemaValidation(updates, userSchema, errors)
 
         if(Object.keys(errors).length > 0) return {
@@ -144,22 +162,38 @@ class UserService{
 
         updates = filterUpdates(updates, userUpdated)
 
-        
-        if(Object.keys(updates).length == 0) return {
+        if(Object.keys(updates).length == 0){
+            const user = userUpdate.toObject()
+            delete user.password
+            delete user.__v
+            return {
             success: true,
-            data: userUpdated
+            data: user
+        }
         }
 
-        userUpdated.set(updates)
+        try{
+            userUpdated.set(updates)
         
-        await userUpdated.save()
-        const user = userUpdated.toObject()
-        delete user.password
+            await userUpdated.save()
+            const user = userUpdated.toObject()
+            delete user.password
 
-        return { 
-            success: true, 
-            data: user,
-            log: loggingMessageConstructor("Success to update user data.", { requester, userUpdateLog, target: user, updated: Object.keys(updates) }, "UPDATE")
+            return { 
+                success: true, 
+                data: user,
+                log: loggingMessageConstructor("Success to update user data.", { requester, userUpdateLog, target: user, updated: Object.keys(updates) }, "UPDATE")
+            }
+        }catch(error){
+            if(error.code == 11000) return {
+                success: false,
+                error: "USER_ALREADY_EXISTS"
+            }
+
+            return {
+                success: false,
+                error: "INTERNAL_SERVER_ERROR"
+            }
         }
     }
 
@@ -184,7 +218,7 @@ class UserService{
         }
 
         const token = jwt.sign(
-            {id: userObj.id, email: userObj.email, type: userObj.type},
+            {_id: userObj._id, email: userObj.email, type: userObj.type},
             process.env.JWT_SECRET,
             {expiresIn: '7d'}
         )
@@ -201,7 +235,15 @@ class UserService{
     }
 
     async logout(token) {
+
+        if(!token) return {
+            success: false,
+            error: "BAD_REQUEST",
+            log: loggingMessageConstructor("Invalid token to logout.", { token: "MISSING" }, "USER: LOGOUT")
+        }
+
         const block = await CacheService.blockToken(token)
+
         return {
             success: true,
         }
@@ -215,7 +257,9 @@ class UserService{
             log: loggingMessageConstructor("The ID format is invalid.", { requester, target: userId}, "DELETE")
         }
 
-        if(String(requester.id) == String(userId) || !["supervisor", "technical"].includes(requester.type)) return {
+        const isOwner = String(requester._id) === String(userId)
+
+        if(isOwner || !USER_RULES.DELETE_USER.includes(requester.type)) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to delete this data.", { requester, target: userId}, "DELETE")

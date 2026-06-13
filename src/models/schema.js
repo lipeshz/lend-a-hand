@@ -2,8 +2,8 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: true},
-    email: { type: String, required: true, unique: true },
+    name: { type: String, required: true, max: 50},
+    email: { type: String, required: true, unique: true, max: 50 },
     password: { type: String, required: true, select: true },
     type: { type: String, default: 'user', enum: ['user', 'technical', 'supervisor']}
 }) 
@@ -23,8 +23,8 @@ userSchema.methods.comparePassword = async function(password){
 }
 
 const ticketSchema = new mongoose.Schema({
-    title: { type: String, required: true, maxLength: 60 },
-    desc: { type: String, required: true, maxLength: 200},
+    title: { type: String, required: true, max: 60 },
+    desc: { type: String, required: true, max: 200},
     urgency: { type: String, required: true, enum: ['very urgent', 'urgent', 'non urgent'] },
     category: { type: String, required: true, enum: ['hardware', 'software', 'conectivity'] },
     image: { type: String, required: false },
@@ -33,7 +33,7 @@ const ticketSchema = new mongoose.Schema({
     closeDate: { type: Date, required: false },
     creator: { type: String, required: true },
     technical: { type: String, required: false },
-    solution: { type: String, required: false, maxLength: 500 }
+    solution: { type: String, required: false, max: 500 }
 })
 
 const User = mongoose.model('User', userSchema)

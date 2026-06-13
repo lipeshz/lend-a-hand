@@ -34,16 +34,14 @@ const schemaValidation = (data, schema, errors) => {
             //     }
             // })
             const failedRule = rules.find(rule => !rule.test(value, data)) // Usar .find() para não sobrepor a mensagem de erro
-            if(failedRule)
+            if(failedRule){
                 errors[key] = failedRule.message // Acessar a message pelo failedRule
+                break;
+            }
         }
     })
     
     return errors
-}
-
-const verifyAllowedFields = () => {
-    
 }
 
 module.exports = { 
