@@ -7,7 +7,6 @@ const CacheService = require('../services/CacheService')
 const filterFields = require('../utils/filterFields')
 const { loggingMessageConstructor } = require('../utils/logFile')
 const { ROLES, USER_RULES } = require('../utils/permissions')
-
 class UserService{
     async store(data, requester) {
         if(!USER_RULES.CREATE_USER.includes(requester.type)) return {
@@ -16,8 +15,8 @@ class UserService{
             log: loggingMessageConstructor("The requester doesn't have permission to create a new user.", { requester }, "CREATE")
         }
 
-        const errors = {}
-        schemaValidation(data, userSchema, errors)
+        let errors = {}
+        errors = schemaValidation(data, userSchema)
 
         if(Object.keys(errors).length > 0) return {
             success: false,
@@ -94,7 +93,7 @@ class UserService{
             log: loggingMessageConstructor("The ID format is invalid.", { requester, target: userId}, "UPDATE")
         }
 
-        const isOwner = String(userId) === String(requester._id)
+        const isOwner = String(userId) === String(requester.id)
 
         if(!isOwner && !USER_RULES.VIEW_ALL_USERS.includes(requester.type)) return {
             success: false,
@@ -124,7 +123,7 @@ class UserService{
             log: loggingMessageConstructor("The ID format is invalid.", { requester, target: userId}, "UPDATE")
         }
 
-        const isOwner = String(userId) === String(requester._id)
+        const isOwner = String(userId) === String(requester.id)
 
         if(!isOwner && !USER_RULES.UPDATE_USER.includes(requester.type)) return {
             success: false,
@@ -150,9 +149,8 @@ class UserService{
 
         const userUpdateLog = userUpdated.toObject()
         delete userUpdateLog.password
-        delete userUpdateLog.__v
 
-        errors = schemaValidation(updates, userSchema, errors)
+        errors = schemaValidation(updates, userSchema)
 
         if(Object.keys(errors).length > 0) return {
             success: false,
@@ -163,13 +161,12 @@ class UserService{
         updates = filterUpdates(updates, userUpdated)
 
         if(Object.keys(updates).length == 0){
-            const user = userUpdate.toObject()
+            const user = userUpdated.toObject()
             delete user.password
-            delete user.__v
             return {
-            success: true,
-            data: user
-        }
+                success: true,
+                data: user
+            }
         }
 
         try{
@@ -178,6 +175,7 @@ class UserService{
             await userUpdated.save()
             const user = userUpdated.toObject()
             delete user.password
+            delete user.__v
 
             return { 
                 success: true, 
@@ -185,6 +183,7 @@ class UserService{
                 log: loggingMessageConstructor("Success to update user data.", { requester, userUpdateLog, target: user, updated: Object.keys(updates) }, "UPDATE")
             }
         }catch(error){
+            console.log(error)
             if(error.code == 11000) return {
                 success: false,
                 error: "USER_ALREADY_EXISTS"
@@ -257,7 +256,7 @@ class UserService{
             log: loggingMessageConstructor("The ID format is invalid.", { requester, target: userId}, "DELETE")
         }
 
-        const isOwner = String(requester._id) === String(userId)
+        const isOwner = String(requester.id) === String(userId)
 
         if(isOwner || !USER_RULES.DELETE_USER.includes(requester.type)) return {
             success: false,

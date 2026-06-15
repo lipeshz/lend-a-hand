@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, max: 50 },
     password: { type: String, required: true, select: true },
     type: { type: String, default: 'user', enum: ['user', 'technical', 'supervisor']}
-}) 
+}, { optimisticConcurrency: true }) 
 
 userSchema.pre('save', async function(){
     if(!this.isModified('password')) return
@@ -23,7 +23,7 @@ userSchema.methods.comparePassword = async function(password){
 }
 
 const ticketSchema = new mongoose.Schema({
-    title: { type: String, required: true, max: 60 },
+    title: { type: String, required: true, min: 10, max: 60 },
     desc: { type: String, required: true, max: 200},
     urgency: { type: String, required: true, enum: ['very urgent', 'urgent', 'non urgent'] },
     category: { type: String, required: true, enum: ['hardware', 'software', 'conectivity'] },
@@ -34,7 +34,7 @@ const ticketSchema = new mongoose.Schema({
     creator: { type: String, required: true },
     technical: { type: String, required: false },
     solution: { type: String, required: false, max: 500 }
-})
+}, { optimisticConcurrency: true })
 
 const User = mongoose.model('User', userSchema)
 const Ticket = mongoose.model('Ticket', ticketSchema)

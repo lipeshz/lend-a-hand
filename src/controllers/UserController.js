@@ -84,7 +84,7 @@ const UserController = {
 
             if(!result.success) return responseErrorController(res, result)
 
-            return res.status(200).json(result)
+            return res.status(204).json(result)
         }catch(error){
             next(error)
         }
@@ -104,5 +104,4 @@ const UserController = {
     }
 }
 
-// Exportação padrão do CommonJS
 module.exports = UserController;

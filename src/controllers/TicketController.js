@@ -12,7 +12,7 @@ const TicketController = {
             if(result.log) loggingMessage(result.log)
             if(!result.success) return responseErrorController(res, result)
 
-            return res.status(200).json(result)
+            return res.status(201).json(result)
         }catch(error){
             next(error)
         }

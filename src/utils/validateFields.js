@@ -20,25 +20,18 @@ function filterUpdates(updateData, userData){
     return updates
 }
 
-// Validação dos campos do usuário
-const schemaValidation = (data, schema, errors) => {
-
-    Object.keys(data).forEach(function(key){
+const schemaValidation = (data, schema) => {
+    let errors = {}
+    Object.keys(data).forEach(key => {
         const rules = schema[key]
         const value = data[key]
-        
-        if(rules){
-            // rules.forEach(rule => {
-            //     if(!rule.test(value, data)){
-            //         errors[key] = rule.message
-            //     }
-            // })
-            const failedRule = rules.find(rule => !rule.test(value, data)) // Usar .find() para não sobrepor a mensagem de erro
-            if(failedRule){
-                errors[key] = failedRule.message // Acessar a message pelo failedRule
-                break;
-            }
+    
+        const failedRule = rules.find(item => !item.test(value, data))
+        if(failedRule){
+            errors[key] = failedRule.message
+            return errors
         }
+        
     })
     
     return errors

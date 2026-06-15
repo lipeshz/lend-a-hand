@@ -16,7 +16,24 @@ const TICKET_RULES = {
     CREATE_TICKET: [ROLES.USER, ROLES.SUPERVISOR, ROLES.TECHNICAL],
     UPDATE_TICKET: [ROLES.USER, ROLES.SUPERVISOR, ROLES.TECHNICAL],
     DELETE_TICKET: [ROLES.SUPERVISOR, ROLES.TECHNICAL],
-    VIEW_ALL_TICKETS: [ROLES.USER, ROLES.SUPERVISOR, ROLES.TECHNICAL]
+    VIEW_ALL_TICKETS: [ROLES.USER, ROLES.SUPERVISOR, ROLES.TECHNICAL],
+
+    TICKET_UPDATE_RULES: {
+        "title": [ROLES.USER],
+        "desc": [ROLES.USER],
+        "image": [ROLES.USER],
+        "urgency": [ROLES.USER],
+        "category": [ROLES.USER],
+        "status": [ROLES.TECHNICAL, ROLES.SUPERVISOR],
+        "closeDate": [ROLES.TECHNICAL, ROLES.SUPERVISOR],
+        "technical": [ROLES.SUPERVISOR],
+        "solution": [ROLES.TECHNICAL, ROLES.SUPERVISOR]
+    }
 }
 
-module.exports = { ROLES, USER_RULES }
+        // const notAllowedFields = {
+        //     supervisor: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
+        //     technical: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
+        //     user: [ "status", "closeDate", "technical", "solution" ]
+        // }
+module.exports = { ROLES, USER_RULES, TICKET_RULES }

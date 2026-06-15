@@ -1,6 +1,5 @@
 const { appendFile } = require('fs/promises')
 const path = require('path');
-const { show } = require('../services/UserService');
 const currentDate = new Date();
 
 async function loggingMessage(content){

@@ -3,11 +3,18 @@ const { loggingMessageConstructor } = require('../utils/logFile');
 const { ticketSchema } = require('../utils/modelSchema');
 const mongoose = require('mongoose')
 const { removeUndefinedFields, schemaValidation } = require('../utils/validateFields');
+const { ROLES, TICKET_RULES } = require('../utils/permissions')
 
 class TicketService{
     async store(reqTicket, creator){
+        if(!TICKET_RULES.CREATE_TICKET.includes(creator.type)) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("Create ticket attempt.", { creator, reqTicket }, "TICKET: STORE")
+        }
+
         let errors = {}
-        errors = schemaValidation(reqTicket, ticketSchema, errors)
+        errors = schemaValidation(reqTicket, ticketSchema)
 
         if(Object.keys(errors).length > 0) return{
             success: false,
@@ -71,24 +78,22 @@ class TicketService{
     async update(ticketId, data, requester){
         let updates = {}
         let errors = {}
+        let forbiddenFields = {}
         updates = removeUndefinedFields(data)
 
-        const notAllowedFields = {
-            supervisor: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
-            technical: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
-            user: [ "status", "closeDate", "technical", "solution" ]
-        }
+        Object.keys(updates).forEach(key => {
+            if(!TICKET_RULES.TICKET_UPDATE_RULES[key].includes(requester.type)){
+                forbiddenFields[key] = key
+            }
+        })
 
-        const forbiddenFields = notAllowedFields[requester?.type] || []
-        const invalidFieldAttempt = Object.keys(updates).find(field => forbiddenFields.includes(field));
-
-        if(invalidFieldAttempt) return {
+        if(Object.keys(forbiddenFields).length > 0) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to change this field.", { requester, update: updates }, "TICKET: UPDATE")
         }
 
-        errors = schemaValidation(updates, ticketSchema, errors)
+        errors = schemaValidation(updates, ticketSchema)
 
         if(Object.keys(errors).length > 0) return {
             success: false,
