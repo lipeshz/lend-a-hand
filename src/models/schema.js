@@ -28,7 +28,7 @@ const ticketSchema = new mongoose.Schema({
     urgency: { type: String, required: true, enum: ['very urgent', 'urgent', 'non urgent'] },
     category: { type: String, required: true, enum: ['hardware', 'software', 'conectivity'] },
     image: { type: String, required: false },
-    status: { type: String, required: true, enum: ['open', 'pending', 'in service', 'closed', 'solved'] },
+    status: { type: String, required: true, enum: ['open', 'pending', 'in service', 'solved'] },
     openDate: { type: Date, required: true },
     closeDate: { type: Date, required: false },
     creator: { type: String, required: true },

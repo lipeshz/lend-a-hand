@@ -26,7 +26,7 @@ const schemaValidation = (data, schema) => {
         const rules = schema[keys]
         const value = values
         let failedRule = {}
-        if(schema[keys]) failedRule = rules.find(item => !item.test(value, data))
+        if(schema[keys]) failedRule = rules.find(item => item.test(value, data))
         if(failedRule){
             errors[keys] = failedRule.message
         }
