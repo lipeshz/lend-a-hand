@@ -76,7 +76,7 @@ class UserService{
         // Filtro os dados vindos dos header
         const data = filterFields(filters)
         // Retorna os usuários do banco de acordo com a regex
-        const users = await User.find(data).select('name email type').lean() // remove a senha para retornar
+        const users = await User.find(data).select('-password').lean() // remove a senha para retornar
 
         return {
             success: true,

@@ -31,9 +31,4 @@ const TICKET_RULES = {
     }
 }
 
-        // const notAllowedFields = {
-        //     supervisor: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
-        //     technical: [ "title", "desc", "image", "urgency", "category", "closeDate" ],
-        //     user: [ "status", "closeDate", "technical", "solution" ]
-        // }
 module.exports = { ROLES, USER_RULES, TICKET_RULES }

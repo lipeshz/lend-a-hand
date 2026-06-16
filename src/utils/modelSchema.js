@@ -1,27 +1,32 @@
 const nameRegex = /^[A-Za-zÀ-ÿ\s]{6,50}$/
-const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const emailRegex = /^(?!.*\.\.)([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
 const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$/
 
 const userSchema = {
     name: [
         { test: (val) => val === null || val === "" || val === undefined, message: "The field name cannot be empty."},
-        { test: (val) => typeof(val)!== "string" && !nameRegex.test(val), message: "Invalid name! Must be 6 to 50 characters and cannot contain special characters." }
+        { test: (val) => typeof(val)!== "string", message: "Invalid name type." },
+        { test: (val) => !nameRegex.test(val), message: "Invalid name! Must be 6 to 50 characters and cannot contain special characters." }
     ],
     email: [
         { test: (val) => val === null || val === "" || val === undefined, message: "The field e-mail cannot be empty."},
-        { test: (val) => typeof(val) !== "string" && !emailRegex.test(val), message: "Invalid e-mail format or domain!" }
+        { test: (val) => typeof(val) !== "string", message: "Invalid e-mail type." },
+        { test: (val) => !emailRegex.test(val), message: "Invalid e-mail format or domain!"}
     ],
     password: [
         { test: (val) => val === null || val === "" || val === undefined, message: "The field password cannot be empty."},
-        { test: (val) => typeof(val) !== "string" && !passwordRegex.test(val), message: "Invalid password! Must be at least 6 characters, contain 1 uppercase, 1 number, and 1 special character." }
+        { test: (val) => typeof(val) !== "string", message: "Invalid password type." },
+        { test: (val) => !passwordRegex.test(val), message: "Invalid password! Must be at least 6 characters, contain 1 uppercase, 1 number, and 1 special character."}
     ],
     conf_password: [ 
         { test: (val) => val === null || val === "" || val === undefined, message: "The field password cannot be empty."},
-        { test: (val, data) => typeof(val) !== "string" && val !== data.password, message: "Password doesn't match!" }
+        { test: (val) => typeof(val) !== "string" },
+        { test: (val, data) => val !== data.password, message: "Password doesn't match!"}
     ],
     type: [
         { test: (val) => val === null || val === "" || val === undefined, message: "The field type cannot be empty."},
-        { test: (val) => typeof(val) !== "string" && !["supervisor", "user", "technical"].includes(val), message: "Invalid type!" }
+        { test: (val) => typeof(val) !== "string", message: "Invalid type format." },
+        { test: (val) => !["supervisor", "user", "technical"].includes(val), message: "Invalid type. Must be user, supervisor or technical."}
     ]
 }
 
@@ -70,9 +75,11 @@ const ticketSchema = {
         { test: (val) => typeof(val) !== "string", message: "Invalid creator ID type."}
     ],
     technical: [
+        { test: (val) => val === undefined || val === null || val === "", message: "The technical ID cannot be empty." },
         { test: (val) => typeof(val) !== "string", message: "Invalid technical ID type."}
     ],
     solution: [
+        { test: (val) => val === undefined || val === null || val === "", message: "The solution cannot be empty." },
         { test: (val) => typeof(val) !== "string" && val.length <= 500, message: "Invalid solution! Must be lower than 500 characters." }
     ]
 }
