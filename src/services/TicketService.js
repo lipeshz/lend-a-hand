@@ -7,6 +7,12 @@ const { ROLES, TICKET_RULES } = require('../utils/permissions')
 
 class TicketService{
     async store(reqTicket, creator){
+        if(!creator) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("Invalid requester.", { target: ticketId, data, requester}, "TICKET: UPDATE")
+        }
+
         if(!TICKET_RULES.CREATE_TICKET.includes(creator.type)) return {
             success: false,
             error: "FORBIDDEN",
@@ -34,6 +40,12 @@ class TicketService{
     }
 
     async index(reqFilters, requester){
+        if(!requester) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("Invalid requester.", { target: ticketId, data, requester}, "TICKET: UPDATE")
+        }
+
         const filters = removeUndefinedFields(reqFilters)
         let tickets = {}
         
@@ -50,6 +62,13 @@ class TicketService{
     }
 
     async show(ticketId, requester){
+
+        if(!requester) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("Invalid requester.", { target: ticketId, data, requester}, "TICKET: UPDATE")
+        }
+
         if(!mongoose.Types.ObjectId.isValid(ticketId)) return {
             success: false,
             error: "NOT_FOUND",
@@ -79,19 +98,14 @@ class TicketService{
         let updates = {}
         let errors = {}
         let forbiddenFields = {}
-        updates = removeUndefinedFields(data)
 
-        Object.keys(updates).forEach(key => {
-            if(!TICKET_RULES.TICKET_UPDATE_RULES[key].includes(requester.type)){
-                forbiddenFields[key] = key
-            }
-        })
-
-        if(Object.keys(forbiddenFields).length > 0) return {
+        if(!requester) return {
             success: false,
             error: "FORBIDDEN",
-            log: loggingMessageConstructor("The requester doesn't have permission to change this field.", { requester, update: updates }, "TICKET: UPDATE")
+            log: loggingMessageConstructor("Invalid requester.", { target: ticketId, data, requester}, "TICKET: UPDATE")
         }
+
+        updates = removeUndefinedFields(data)
 
         errors = schemaValidation(updates, ticketSchema)
 
@@ -104,7 +118,7 @@ class TicketService{
         const { User } = require('../models/schema')
         const [ticketObj, technical] = await Promise.all([
             Ticket.findById(ticketId).select('-__v'),
-            updates.technical ? User.findById(updates.technical).lean() : null
+            updates.technical && mongoose.Types.ObjectId.isValid(updates.technical) ? User.findById(updates.technical).lean() : null
         ])
 
         if(!ticketObj) return {
@@ -112,17 +126,30 @@ class TicketService{
             error: "NOT_FOUND"
         }
 
+        if(updates.technical && !technical) return {
+            success: false,
+            error: "NOT_FOUND",
+        }
+
+        const isOwner = String(requester.id) !== String(ticketObj.creator)
+
+        Object.keys(updates).forEach(key => {
+            if(!TICKET_RULES.TICKET_UPDATE_RULES[key].includes(requester.type) && !isOwner){
+                forbiddenFields[key] = key
+            }
+        })
+
+        if(Object.keys(forbiddenFields).length > 0) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("The requester doesn't have permission to change this field.", { requester, update: updates }, "TICKET: UPDATE")
+        }
+
         if(technical && !["supervisor", "technical"].includes(technical.type)) return {
             success: false,
             error: "UNAUTHORIZED",
             log: loggingMessageConstructor("The technical can't be a user.", { requester, target: ticketId, request: updates }, "TICKET: UPDATE")
         }
-
-        if(!["supervisor", "technical"].includes(requester.type) && String(requester.id) != String(ticketObj.creator)) return {
-            success: false,
-            error: "FORBIDDEN",
-            log: loggingMessageConstructor("The requester doesn't have permission to access this ticket.", { requester, target: ticketObj, update: updates }, "TICKET: UPDATE")
-        }   
 
         ticketObj.set(updates)
         await ticketObj.save()
@@ -135,7 +162,14 @@ class TicketService{
     }
 
     async delete(ticketId, requester){
-        if(!["supervisor", "technical"].includes(requester.type)) return {
+
+        if(!requester) return {
+            success: false,
+            error: "FORBIDDEN",
+            log: loggingMessageConstructor("Invalid requester.", { target: ticketId, data, requester}, "TICKET: UPDATE")
+        }
+
+        if(!TICKET_RULES.DELETE_TICKET.includes(requester.type)) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("The requester doesn't have permission to delete this ticket.", { requester, target: ticketId }, "TICKET: DELETE")

@@ -3,10 +3,10 @@ OBJETIVOS:
 log
 
 user
-    - store
-        - precisa retornar o primeiro erro de cada campo
 
 ticket
     - refatorar código de validação
+    - update
+        - permissões
 
 token

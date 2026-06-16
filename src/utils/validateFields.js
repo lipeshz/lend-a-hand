@@ -22,14 +22,13 @@ function filterUpdates(updateData, userData){
 
 const schemaValidation = (data, schema) => {
     let errors = {}
-    Object.keys(data).forEach(key => {
-        const rules = schema[key]
-        const value = data[key]
-    
-        const failedRule = rules.find(item => !item.test(value, data))
+    Object.entries(data).forEach(([keys, values]) => {
+        const rules = schema[keys]
+        const value = values
+        let failedRule = {}
+        if(schema[keys]) failedRule = rules.find(item => !item.test(value, data))
         if(failedRule){
-            errors[key] = failedRule.message
-            return errors
+            errors[keys] = failedRule.message
         }
         
     })

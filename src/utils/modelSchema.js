@@ -59,6 +59,16 @@ const ticketSchema = {
     closeDate: [
         { test: (val) => val !== undefined && val !== null && val !== "", message: "The open date cannot be empty." },
         { test: (val) => !!val && !isNaN(Date.parse(val)), message: "Invalid date format!" }
+    ],
+    crator: [
+        { test: (val) => val !== undefined && val !== null && val !== "", message: "The creator ID cannot be empty." },
+        { test: (val) => typeof(val) === "string", message: "Invalid creator ID type."}
+    ],
+    technical: [
+        { test: (val) => typeof(val) === "string", message: "Invalid technical ID type."}
+    ],
+    solution: [
+        { test: (val) => typeof(val) === "string" && val.length <= 500, message: "Invalid solution! Must be lower than 500 characters." }
     ]
 }
 
