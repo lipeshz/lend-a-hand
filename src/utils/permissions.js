@@ -1,7 +1,8 @@
 const ROLES = {
     SUPERVISOR: 'supervisor',
     TECHNICAL: 'technical',
-    USER: 'user'
+    USER: 'user',
+    OWNER: true
 }
 
 const USER_RULES = {

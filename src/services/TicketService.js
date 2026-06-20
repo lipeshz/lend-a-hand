@@ -1,6 +1,6 @@
 const { Ticket } = require('../models/schema');
 const { loggingMessageConstructor } = require('../utils/logFile');
-const { ticketSchema } = require('../utils/modelSchema');
+const { ticketSchema, ticketState } = require('../utils/modelSchema');
 const mongoose = require('mongoose')
 const { removeUndefinedFields, schemaValidation } = require('../utils/validateFields');
 const { ROLES, TICKET_RULES } = require('../utils/permissions')
@@ -10,16 +10,17 @@ class TicketService{
         if(!creator) return {
             success: false,
             error: "FORBIDDEN",
-            log: loggingMessageConstructor("Invalid requester.", { target: ticketId, data, requester}, "TICKET: UPDATE")
+            log: loggingMessageConstructor("Invalid requester.", { target: ticketId, data, requester}, "TICKET: STORE")
         }
 
-        if(!TICKET_RULES.CREATE_TICKET.includes(creator.type)) return {
+        if(!TICKET_RULES.CREATE_TICKET[creator.type]) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("Create ticket attempt.", { creator, reqTicket }, "TICKET: STORE")
         }
 
         let errors = {}
+        reqTicket.status = "open"
         errors = schemaValidation(reqTicket, ticketSchema)
 
         if(Object.keys(errors).length > 0) return{
@@ -133,11 +134,11 @@ class TicketService{
 
         const isOwner = String(requester.id) !== String(ticketObj.creator)
 
-        Object.keys(updates).forEach(key => {
-            if(!TICKET_RULES.TICKET_UPDATE_RULES[key].includes(requester.type) && !isOwner){
+        for(const key in updates){
+            if(!TICKET_RULES.TICKET_UPDATE_RULES[key][requester.type] && !isOwner){
                 forbiddenFields[key] = key
             }
-        })
+        }
 
         if(Object.keys(forbiddenFields).length > 0) return {
             success: false,
@@ -145,10 +146,26 @@ class TicketService{
             log: loggingMessageConstructor("The requester doesn't have permission to change this field.", { requester, update: updates }, "TICKET: UPDATE")
         }
 
-        if(technical && !["supervisor", "technical"].includes(technical.type)) return {
+        if(technical && technical.type === "user") return {
             success: false,
             error: "UNAUTHORIZED",
             log: loggingMessageConstructor("The technical can't be a user.", { requester, target: ticketId, request: updates }, "TICKET: UPDATE")
+        }
+
+        const finalState = {
+            status: updates.status !== undefined ? updates.status : ticketObj.status,
+            solution: updates.solution !== undefined ? updates.solution : ticketObj.solution,
+            technical: updates.technical !== undefined ? updates.technical : ticketObj.technical,
+            closeDate: updates.closeDate !== undefined ? updates.closeDate : ticketObj.closeDate
+        }
+        
+        const tfinalState = removeUndefinedFields(finalState)
+        errors = schemaValidation(tfinalState, ticketState)
+
+        if(Object.keys(errors).length > 0) return {
+            success: false,
+            error: "UNPROCESSABLE_CONTENT",
+            labels: errors
         }
 
         ticketObj.set(updates)

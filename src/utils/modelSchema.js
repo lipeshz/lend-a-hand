@@ -59,16 +59,15 @@ const ticketSchema = {
     ],
     status: [
         { test: (val) => val === undefined || val === null || val === "", message: "The status cannot be empty." },
-        { test: (val) => typeof(val) !== "string" || !["open", "pending", "in service", "solved"].includes(val), message: "Invalid status!"},
-        { test: (val, data) => val === "solved" || !data.technical || !data.solution || !data.closeDate, message: "It is not possible to close a ticket without a technical, a solution and a close date."}
+        { test: (val) => typeof(val) !== "string" || !["open", "pending", "in service", "solved"].includes(val), message: "Invalid status!"}
     ],
     openDate: [
         { test: (val) => val === undefined || val === null || val === "", message: "The open date cannot be empty." },
-        { test: (val) => !isNaN(Date.parse(val)), message: "Invalid date format!" }
+        { test: (val) => isNaN(Date.parse(val)), message: "Invalid date format!" }
     ],
     closeDate: [
         { test: (val) => val === undefined || val === null || val === "", message: "The close date cannot be empty." },
-        { test: (val) => !isNaN(Date.parse(val)), message: "Invalid date format!" }
+        { test: (val) => isNaN(Date.parse(val)), message: "Invalid date format!" },
     ],
     crator: [
         { test: (val) => val === undefined || val === null || val === "", message: "The creator ID cannot be empty." },
@@ -76,12 +75,25 @@ const ticketSchema = {
     ],
     technical: [
         { test: (val) => val === undefined || val === null || val === "", message: "The technical ID cannot be empty." },
-        { test: (val) => typeof(val) !== "string", message: "Invalid technical ID type."}
+        { test: (val) => typeof(val) !== "string", message: "Invalid technical ID type."},
     ],
     solution: [
         { test: (val) => val === undefined || val === null || val === "", message: "The solution cannot be empty." },
-        { test: (val) => typeof(val) !== "string" && val.length <= 500, message: "Invalid solution! Must be lower than 500 characters." }
+        { test: (val) => typeof(val) !== "string" && val.length <= 500, message: "Invalid solution! Must be lower than 500 characters." },
     ]
 }
 
-module.exports = { userSchema, ticketSchema }
+const ticketState = {
+    status: [
+        { test: (val, data) => val === "solved" && (!data.technical || !data.solution || !data.closeDate), message: "It is not possible close the ticket without a solution, a technical and a valid close date." },
+        { test: (val, data) => val === "in service" && !data.technical, message: "It is not possible " }
+    ],
+    solution: [
+        { test: (val, data) => !data.status || !data.technical || !data.closeDate, message: "It is not possible insert a solution without a status, a technical and a valid close date." }
+    ],
+    closeDate: [
+        { test: (val, data) => !data.status === "solved" || !data.technical || !data.solution, message: "It is not possible close the ticket without the solved status, a technical and a solution." }
+    ]
+}
+
+module.exports = { userSchema, ticketSchema, ticketState }

@@ -4,7 +4,7 @@ const errorTable = {
     "FORBIDDEN": { statusCode: 403, message: "Forbidden." },
     "NOT_FOUND": { statusCode: 404, message: "Not found." },
     "USER_ALREADY_EXISTS": { statusCode: 409, message: "User already exists." },
-    "UNPROCESSABLE_CONTENT": { statusCode: 422, message: "Unprocessable contet." },
+    "UNPROCESSABLE_CONTENT": { statusCode: 422, message: "Unprocessable content." },
 }
 
 function errorMap(errorKey){

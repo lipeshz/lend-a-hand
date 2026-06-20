@@ -7,6 +7,6 @@ user
 ticket
     - refatorar código de validação
     - update
-        - permissões
+        - organizar dependencia do status, closeDate, technical, solution
 
 token
