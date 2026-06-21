@@ -13,7 +13,7 @@ class TicketService{
             log: loggingMessageConstructor("Invalid requester.", { target: ticketId, data, requester}, "TICKET: STORE")
         }
 
-        if(!TICKET_RULES.CREATE_TICKET[creator.type]) return {
+        if(!TICKET_RULES.CREATE_TICKET.includes(creator.type)) return {
             success: false,
             error: "FORBIDDEN",
             log: loggingMessageConstructor("Create ticket attempt.", { creator, reqTicket }, "TICKET: STORE")
@@ -132,10 +132,9 @@ class TicketService{
             error: "NOT_FOUND",
         }
 
-        const isOwner = String(requester.id) !== String(ticketObj.creator)
-
+        const isOwner = String(requester._id) === String(ticketObj.creator)
         for(const key in updates){
-            if(!TICKET_RULES.TICKET_UPDATE_RULES[key][requester.type] && !isOwner){
+            if(!TICKET_RULES.TICKET_UPDATE_RULES[key].includes(requester.type) && !isOwner){
                 forbiddenFields[key] = key
             }
         }
